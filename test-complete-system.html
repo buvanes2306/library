@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .summary { background: #f0f0f0; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .working { color: #155724; }
+        .broken { color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Complete System Test</h1>
+    <p><strong>Testing entire system with local MongoDB</strong></p>
+    
+    <div class="test-section">
+        <h2>🔐 Login Test</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👤 Auth Check Test</h2>
+        <button onclick="testAuthCheck()">Test Auth Check</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📚 Books API Test</h2>
+        <button onclick="testBooks()">Test Books</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👥 Users API Test</h2>
+        <button onclick="testUsers()">Test Users</button>
+        <div id="users-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🏠 Dashboard Data Test</h2>
+        <button onclick="testDashboard()">Test Dashboard</button>
+        <div id="dashboard-result"></div>
+    </div>
+
+    <script>
+        let testResults = {
+            login: false,
+            auth: false,
+            books: false,
+            users: false,
+            dashboard: false
+        };
+        
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'buvanese23@gmail.com',
+                        password: 'buvanes'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result success">✅ Login successful!<br>
+                        User: ${data.data.user.name}<br>
+                        Email: ${data.data.user.email}<br>
+                        Role: ${data.data.user.role}</div>`;
+                    testResults.login = true;
+                } else {
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result error">❌ Login failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('login-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testAuthCheck() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result warning">⚠️ No token found. Please login first.</div>`;
+                    return;
+                }
+                
+                const response = await fetch('http://localhost:5000/api/auth/me', {
+                    headers: {
+                        'Cookie': `token=${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result success">✅ Auth check passed!<br>
+                        User: ${data.data.user.name}<br>
+                        Role: ${data.data.user.role}</div>`;
+                    testResults.auth = true;
+                } else {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result error">❌ Auth check failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testBooks() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result success">✅ Books API working!<br>
+                        Found ${data.data.books.length} books<br>
+                        Total: ${data.data.pagination.total}</div>`;
+                    testResults.books = true;
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result error">❌ Books API failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testUsers() {
+            try {
+                const response = await fetch('http://localhost:5000/api/users/public-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('users-result').innerHTML = 
+                        `<div class="result success">✅ Users API working!<br>
+                        Total users: ${data.data.totalUsers}</div>`;
+                    testResults.users = true;
+                } else {
+                    document.getElementById('users-result').innerHTML = 
+                        `<div class="result error">❌ Users API failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('users-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testDashboard() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('dashboard-result').innerHTML = 
+                        `<div class="result warning">⚠️ No token found. Please login first.</div>`;
+                    return;
+                }
+                
+                const [booksResponse, usersResponse] = await Promise.all([
+                    fetch('http://localhost:5000/api/books'),
+                    fetch('http://localhost:5000/api/users/public-stats')
+                ]);
+                
+                const booksData = await booksResponse.json();
+                const usersData = await usersResponse.json();
+                
+                if (booksData.success && usersData.success) {
+                    document.getElementById('dashboard-result').innerHTML = 
+                        `<div class="result success">✅ Dashboard data working!<br>
+                        Books: ${booksData.data.pagination.total}<br>
+                        Users: ${usersData.data.totalUsers}</div>`;
+                    testResults.dashboard = true;
+                } else {
+                    document.getElementById('dashboard-result').innerHTML = 
+                        `<div class="result error">❌ Dashboard data failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('dashboard-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing complete system...');
+            testBooks();
+            testUsers();
+        };
+        
+        // Show summary
+        function showSummary() {
+            const workingCount = Object.values(testResults).filter(result => result).length;
+            const totalCount = Object.keys(testResults).length;
+            const successRate = Math.round((workingCount / totalCount) * 100);
+            
+            document.body.innerHTML += `
+                <div class="summary">
+                    <h2>🎯 Test Results Summary</h2>
+                    <div class="working">✅ Working: ${workingCount}/${totalCount} (${successRate}%)</div>
+                    <div class="broken">❌ Broken: ${totalCount - workingCount}/${totalCount} (${100 - successRate}%)</div>
+                    <button onclick="location.reload()">Test Again</button>
+                </div>
+            `;
+        }
+        
+        // Add summary button
+        setTimeout(() => {
+            document.body.innerHTML += `
+                <button onclick="showSummary()" style="position: fixed; top: 20px; right: 20px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    📊 Show Summary
+                </button>
+            `;
+        }, 2000);
+    </script>
+</body>
+</html>

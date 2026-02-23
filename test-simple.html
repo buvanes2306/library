@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+    <h1>Books Page Test</h1>
+    <button onclick="testAPI()">Test Books API</button>
+    <div id="result"></div>
+    
+    <script>
+        function testAPI() {
+            fetch('http://localhost:5000/api/books')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('result').innerHTML = '✅ Books API working! Found ' + data.data.books.length + ' books';
+                    } else {
+                        document.getElementById('result').innerHTML = '❌ Books API failed';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = '❌ Error: ' + error.message;
+                });
+        }
+        }
+    </script>
+</body>
+</html>

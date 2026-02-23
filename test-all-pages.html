@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test All Pages</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .page-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test All Pages</h1>
+    
+    <div class="page-grid">
+        <div class="test-section">
+            <h2>🏠 Dashboard</h2>
+            <button onclick="testPage('/dashboard')">Test Dashboard</button>
+            <div id="dashboard-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📚 Books</h2>
+            <button onclick="testPage('/books')">Test Books</button>
+            <div id="books-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>👤 Login</h2>
+            <button onclick="testPage('/login')">Test Login</button>
+            <div id="login-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 Register</h2>
+            <button onclick="testPage('/register')">Test Register</button>
+            <div id="register-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>👥 Admin Panel</h2>
+            <button onclick="testPage('/admin')">Test Admin</button>
+            <div id="admin-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📖 Book Detail</h2>
+            <button onclick="testPage('/books/test-book')">Test Book Detail</button>
+            <div id="book-detail-result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testPage(page) {
+            try {
+                console.log(`🔍 Testing page: ${page}`);
+                
+                const response = await fetch(`http://localhost:5173${page}`);
+                
+                if (response.ok) {
+                    const text = await response.text();
+                    document.getElementById(`${page.replace('/', '')}-result`).innerHTML = 
+                        `<div class="result success">✅ ${page} loaded successfully! Status: ${response.status}</div>`;
+                    console.log(`✅ ${page} Status: ${response.status}`);
+                } else {
+                    document.getElementById(`${page.replace('/', '')}-result`).innerHTML = 
+                        `<div class="result error">❌ ${page} failed! Status: ${response.status}</div>`;
+                    console.log(`❌ ${page} Status: ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById(`${page.replace('/', '')}-result`).innerHTML = 
+                    `<div class="result error">❌ ${page} Error: ${error.message}</div>`;
+                console.log(`❌ ${page} Error: ${error.message}`);
+            }
+        }
+        
+        // Test all pages on load
+        window.onload = function() {
+            console.log('🧪 Testing all pages...');
+            testPage('/dashboard');
+            testPage('/books');
+            testPage('/login');
+            testPage('/register');
+            testPage('/admin');
+            testPage('/books/test-book');
+        };
+    </script>
+</body>
+</html>

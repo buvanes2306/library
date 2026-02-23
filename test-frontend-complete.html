@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Frontend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .author-display { background: #e9ecef; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Complete Frontend Test</h1>
+    <p><strong>Test the complete frontend system</strong></p>
+    
+    <div class="test-section">
+        <h2>🔍 Test Search Functionality</h2>
+        <button onclick="testSearch()">Test Search API</button>
+        <div id="search-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📚 Test Books Display</h2>
+        <button onclick="testBooksDisplay()">Test Books Display</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👤 Test Author Display</h2>
+        <button onclick="testAuthorDisplay()">Test Author Display</button>
+        <div id="author-result"></div>
+    </div>
+
+    <script>
+        async function testSearch() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=computer');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('search-result').innerHTML = 
+                        `<div class="result success">✅ Search API working!<br>
+                        Found ${data.data.books.length} books<br>
+                        Total: ${data.data.pagination.total}</div>`;
+                } else {
+                    document.getElementById('search-result').innerHTML = 
+                        `<div class="result error">❌ Search API failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('search-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testBooksDisplay() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<div class="book-item">';
+                    html += '<h3>📚 Books List (First 5)</h3>';
+                    
+                    data.data.books.slice(0, 5).forEach((book, index) => {
+                        const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                        html += `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0;">
+                                <h4>Book ${index + 1}: ${book.title}</h4>
+                                <p><strong>Author:</strong> ${book.author || 'undefined'}</p>
+                                <p><strong>Authors:</strong> ${book.authors ? book.authors.join(', ') : 'undefined'}</p>
+                                <p><strong>Display:</strong> ${authorDisplay}</p>
+                                <p><strong>Department:</strong> ${book.department}</p>
+                                <p><strong>Status:</strong> ${book.status}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    document.getElementById('books-result').innerHTML = html;
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result error">❌ Books API failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testAuthorDisplay() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=computer');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length > 0) {
+                    const books = data.data.books;
+                    let html = '<div class="author-display">';
+                    html += '<h3>👤 Author Display Test</h3>';
+                    
+                    // Test different author display scenarios
+                    books.forEach((book, index) => {
+                        const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                        const hasAuthor = book.author !== undefined;
+                        const hasAuthors = book.authors && book.authors.length > 0;
+                        
+                        html += `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0;">
+                                <h4>Book ${index + 1}: ${book.title}</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div>
+                                        <strong>Author Field:</strong><br>
+                                        <span style="color: ${hasAuthor ? 'green' : 'red'}">${hasAuthor ? '✅ Defined' : '❌ Undefined'}</span><br>
+                                        ${book.author || 'N/A'}
+                                    </div>
+                                    <div>
+                                        <strong>Authors Array:</strong><br>
+                                        <span style="color: ${hasAuthors ? 'green' : 'red'}">${hasAuthors ? '✅ Defined' : '❌ Undefined'}</span><br>
+                                        ${hasAuthors ? book.authors.join(', ') : 'N/A'}
+                                    </div>
+                                </div>
+                                <p><strong>Final Display:</strong><br>
+                                <span style="color: blue; font-weight: bold;">${authorDisplay}</span></p>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    document.getElementById('author-result').innerHTML = html;
+                } else {
+                    document.getElementById('author-result').innerHTML = 
+                        `<div class="result warning">⚠️ No books found for search</div>`;
+                }
+            } catch (error) {
+                document.getElementById('author-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing complete frontend system...');
+            testSearch();
+            testBooksDisplay();
+            testAuthorDisplay();
+        };
+    </script>
+</body>
+</html>

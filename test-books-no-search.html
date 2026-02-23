@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Books Page Test (No Search)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>📚 Books Page Test (No Search)</h1>
+    <p><strong>Test the Books page without search functionality</strong></p>
+    
+    <div class="test-section">
+        <h2>🔍 Test Books API</h2>
+        <button onclick="testBooksAPI()">Test Books API</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📖 Test Books Display</h2>
+        <button onclick="testBooksDisplay()">Test Books Display</button>
+        <div id="books-display-result"></div>
+    </div>
+
+    <script>
+        async function testBooksAPI() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result success">✅ Books API working!<br>
+                        Found ${data.data.books.length} books<br>
+                        Total: ${data.data.pagination.total}</div>`;
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result error">❌ Books API failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testBooksDisplay() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<div class="book-item">';
+                    html += '<h3>📚 Books List (First 5)</h3>';
+                    
+                    data.data.books.slice(0, 5).forEach((book, index) => {
+                        const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                        html += `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0;">
+                                <h4>Book ${index + 1}: ${book.title}</h4>
+                                <p><strong>Author:</strong> ${book.author || 'undefined'}</p>
+                                <p><strong>Authors:</strong> ${book.authors ? book.authors.join(', ') : 'undefined'}</p>
+                                <p><strong>Display:</strong> ${authorDisplay}</p>
+                                <p><strong>Department:</strong> ${book.department}</p>
+                                <p><strong>Status:</strong> ${book.status}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    document.getElementById('books-display-result').innerHTML = html;
+                } else {
+                    document.getElementById('books-display-result').innerHTML = 
+                        `<div class="result error">❌ Books API failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-display-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing Books page without search...');
+            testBooksAPI();
+            testBooksDisplay();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create First User</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        input { display: block; margin: 5px 0; padding: 8px; width: 300px; }
+        button { padding: 10px 20px; margin: 5px 0; cursor: pointer; }
+        .warning { background: #fff3cd; color: #856404; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Create Your First User</h1>
+    
+    <div class="warning">
+        <strong>⚠️ Database Status:</strong> Users collection is empty (0 users)<br>
+        You need to register your first user to use the system.
+    </div>
+    
+    <div class="test-section">
+        <h2>Register Admin User</h2>
+        <input type="text" id="name" placeholder="Name" value="Buvanes">
+        <input type="email" id="email" placeholder="Email" value="buvanese23@gmail.com">
+        <input type="password" id="password" placeholder="Password" value="buvanes">
+        <select id="role">
+            <option value="admin">Admin</option>
+            <option value="viewer">Viewer</option>
+        </select>
+        <button onclick="createUser()">Create User</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function createUser() {
+            try {
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const role = document.getElementById('role').value;
+                
+                console.log('🚀 Creating user:', { name, email, role });
+                
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                
+                const text = await response.text();
+                console.log('Response:', response.status, text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    
+                    if (data.success) {
+                        document.getElementById('result').innerHTML = 
+                            `<div class="result success">✅ User created successfully!<br>
+                            Name: ${data.data.user.name}<br>
+                            Email: ${data.data.user.email}<br>
+                            Role: ${data.data.user.role}<br>
+                            You can now login with these credentials.</div>`;
+                    } else {
+                        document.getElementById('result').innerHTML = 
+                            `<div class="result error">❌ Failed: ${data.message}</div>`;
+                    }
+                } catch (parseError) {
+                    document.getElementById('result').innerHTML = 
+                        `<div class="result error">❌ Parse error: ${text}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Your Login</h1>
+    
+    <div class="test-section">
+        <h2>Login Test</h2>
+        <input type="email" id="email" placeholder="Email" value="buvanese23@gmail.com" style="width: 300px; margin: 5px;">
+        <input type="password" id="password" placeholder="Password" value="buvanes" style="width: 300px; margin: 5px;">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Check Stored Token</h2>
+        <button onclick="checkToken()">Check Local Storage</button>
+        <div id="token-result"></div>
+    </div>
+
+    <script>
+        async function testLogin() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                console.log('🔍 Testing login with:', email);
+                
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result success">✅ Login successful! Token: ${data.token.substring(0, 30)}...</div>`;
+                    
+                    // Store token in localStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    console.log('💾 Token stored in localStorage');
+                } else {
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result error">❌ Login failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('login-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function checkToken() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            console.log('🔍 Checking stored data:');
+            console.log('Token:', token ? token.substring(0, 30) + '...' : 'None');
+            console.log('User:', user ? JSON.parse(user) : 'None');
+            
+            document.getElementById('token-result').innerHTML = 
+                `<div class="result ${token ? 'success' : 'error'}">
+                    ${token ? '✅ Token found' : '❌ No token'}<br>
+                    Token: ${token ? token.substring(0, 50) + '...' : 'None'}<br>
+                    User: ${user || 'None'}
+                </div>`;
+        }
+    </script>
+</body>
+</html>

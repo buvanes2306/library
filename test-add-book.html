@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Test Book</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Add Test Book</h1>
+    <button onclick="addTestBook()">Add Test Book</button>
+    <div id="result" class="result"></div>
+
+    <script>
+        async function addTestBook() {
+            // First login to get token
+            try {
+                console.log('Step 1: Logging in...');
+                const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed');
+                }
+                
+                console.log('Login successful');
+                
+                // Add book
+                console.log('Step 2: Adding book...');
+                const bookData = {
+                    accNo: 'TEST002',
+                    title: 'Test Book for Library System',
+                    author: 'System Test',
+                    publisher: 'Test Publisher',
+                    publishedYear: 2023,
+                    department: 'Computer Science',
+                    status: 'Available',
+                    locationRack: 'A1',
+                    shelf: '2',
+                    callNumber: '005.1/TEST2',
+                    edition: '1st Edition',
+                    numberOfCopies: 1,
+                    isbn: '978-0-123456-78-9',
+                    description: 'This is a test book to verify the system is working properly.'
+                };
+                
+                const bookResponse = await fetch('http://localhost:5000/api/books', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(bookData)
+                });
+                
+                const bookResult = await bookResponse.json();
+                console.log('Book response:', bookResult);
+                
+                // Fetch all books to verify
+                console.log('Step 3: Fetching all books...');
+                const booksResponse = await fetch('http://localhost:5000/api/books', {
+                    credentials: 'include'
+                });
+                
+                const booksData = await booksResponse.json();
+                console.log('All books:', booksData);
+                
+                document.getElementById('result').innerHTML = 
+                    '<h3>Results:</h3>' +
+                    '<p><strong>Login:</strong> ' + (loginResponse.ok ? 'Success' : 'Failed') + '</p>' +
+                    '<p><strong>Add Book:</strong> ' + (bookResponse.ok ? 'Success' : 'Failed') + '</p>' +
+                    '<p><strong>Total Books:</strong> ' + (booksData.data?.pagination?.total || 'Unknown') + '</p>' +
+                    '<h4>Books in Database:</h4>' +
+                    '<pre>' + JSON.stringify(booksData.data?.books || [], null, 2) + '</pre>';
+                    
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

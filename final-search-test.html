@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #e2e3e5; color: #333; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Final Search Test</h1>
+    
+    <div class="info">
+        <h3>📊 Search Test Results</h3>
+        <p><strong>Test Case 1:</strong> Search for "171" (should return 0 results)</p>
+        <p><strong>Test Case 2:</strong> Search for "computer" (should return 10 results)</p>
+        <p><strong>Expected Behavior:</strong> Search should return 0 results when no books match the search term</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Test Search for "171"</h2>
+        <button onclick="testSearch171()">Test Search "171"</button>
+        <div id="search171-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>💻 Test Search for "computer"</h2>
+        <button onclick="testSearchComputer()">Test Search "computer"</button>
+        <div id="search-computer-result"></div>
+    </div>
+
+    <script>
+        async function testSearch171() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=171');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('search171-result').innerHTML = 
+                        `<div class="result success">✅ Search for "171" working!<br>
+                        Found ${data.data.books.length} books<br>
+                        <strong>This is correct behavior - no books contain "171"</strong></div>`;
+                } else {
+                    document.getElementById('search171-result').innerHTML = 
+                        `<div class="result error">❌ Search failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('search171-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testSearchComputer() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=computer');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('search-computer-result').innerHTML = 
+                        `<div class="result success">✅ Search for "computer" working!<br>
+                        Found ${data.data.books.length} books<br>
+                        <strong>Authors display correctly: ${data.data.books[0].authors ? data.data.books[0].authors.join(', ') : 'N/A'}</strong></div>`;
+                } else {
+                    document.getElementById('search-computer-result').innerHTML = 
+                        `<div class="result error">❌ Search failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('search-computer-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

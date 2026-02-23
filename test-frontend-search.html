@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend Search Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Books API</h2>
+        <button onclick="testBooksAPI()">Test Books API</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Search API</h2>
+        <button onclick="testSearch()">Test Search</button>
+        <div id="search-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Author Display</h2>
+        <button onclick="testAuthorDisplay()">Test Author Display</button>
+        <div id="author-result"></div>
+    </div>
+
+    <script>
+        async function testBooksAPI() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result success">✅ Books API working!<br>
+                        Found ${data.data.books.length} books</div>`;
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result error">❌ Books API failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testSearch() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=computer');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('search-result').innerHTML = 
+                        `<div class="result success">✅ Search API working!<br>
+                        Found ${data.data.books.length} books</div>`;
+                    
+                    // Test author display
+                    if (data.data.books.length > 0) {
+                        const firstBook = data.data.books[0];
+                        const authorDisplay = firstBook.author || (firstBook.authors && firstBook.authors.length > 0 ? firstBook.authors.join(', ') : 'N/A');
+                        
+                        document.getElementById('author-result').innerHTML = 
+                            `<div class="result success">✅ Author display working!<br>
+                            Book: ${firstBook.title}<br>
+                            Author field: ${firstBook.author || 'undefined'}<br>
+                            Authors array: ${firstBook.authors ? firstBook.authors.join(', ') : 'undefined'}<br>
+                            Display logic: ${authorDisplay}</div>`;
+                    } else {
+                        document.getElementById('author-result').innerHTML = 
+                            `<div class="result warning">⚠️ No books found for search</div>`;
+                    }
+                } else {
+                    document.getElementById('search-result').innerHTML = 
+                        `<div class="result error">❌ Search API failed</div>`;
+                }
+            } catch (error) {
+                document.getElementById('search-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testAuthorDisplay() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=computer');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length > 0) {
+                    const books = data.data.books;
+                    let html = '<div class="book-item">';
+                    
+                    books.forEach((book, index) => {
+                        const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                        html += `
+                            <h4>Book ${index + 1}: ${book.title}</h4>
+                            <p><strong>Author:</strong> ${book.author || 'undefined'}</p>
+                            <p><strong>Authors:</strong> ${book.authors ? book.authors.join(', ') : 'undefined'}</p>
+                            <p><strong>Display Logic:</strong> ${authorDisplay}</p>
+                            <hr>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    document.getElementById('author-result').innerHTML = html;
+                } else {
+                    document.getElementById('author-result').innerHTML = 
+                        `<div class="result error">❌ No books found</div>`;
+                }
+            } catch (error) {
+                document.getElementById('author-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing frontend search...');
+            testBooksAPI();
+            testSearch();
+        };
+    </script>
+</body>
+</html>

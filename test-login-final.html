@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+</head>
+<body>
+    <h1>Test Login</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'buvanese23@gmail.com',
+                        password: 'buvanes'
+                    })
+                });
+                
+                const text = await response.text();
+                console.log('Raw response:', text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed data:', data);
+                    
+                    if (data.success) {
+                        document.getElementById('result').innerHTML = 
+                            `<div style="color: green">✅ Login successful! User: ${data.data.user.name}, Role: ${data.data.user.role}</div>`;
+                    } else {
+                        document.getElementById('result').innerHTML = 
+                            `<div style="color: red">❌ Login failed: ${data.message}</div>`;
+                    }
+                } catch (parseError) {
+                    document.getElementById('result').innerHTML = 
+                        `<div style="color: red">❌ Parse error: ${text}</div>`;
+                }
+            } catch (error) {
+                console.log('Fetch error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<div style="color: red">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

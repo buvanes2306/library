@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        input { display: block; margin: 5px 0; padding: 8px; width: 300px; }
+        button { padding: 10px 20px; margin: 5px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Registration Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Registration</h2>
+        <p><strong>Common Issues:</strong></p>
+        <ul>
+            <li>Email already exists in database</li>
+            <li>Invalid email format</li>
+            <li>Password too short (min 6 characters)</li>
+            <li>Role must be 'admin' or 'viewer'</li>
+            <li>Name required (min 2, max 50 characters)</li>
+        </ul>
+        
+        <hr>
+        
+        <h3>Try Registration:</h3>
+        <input type="text" id="name" placeholder="Name" value="New User">
+        <input type="email" id="email" placeholder="Email" value="newuser@example.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <select id="role">
+            <option value="viewer">Viewer</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button onclick="testRegister()">Test Register</button>
+        <div id="register-result"></div>
+        
+        <hr>
+        
+        <h3>Check Existing Users:</h3>
+        <button onclick="checkUsers()">Check Database Users</button>
+        <div id="users-result"></div>
+    </div>
+
+    <script>
+        async function testRegister() {
+            try {
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const role = document.getElementById('role').value;
+                
+                console.log('🔍 Testing registration:', { name, email, password, role });
+                
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                
+                const text = await response.text();
+                console.log('Response status:', response.status);
+                console.log('Raw response:', text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed data:', data);
+                    
+                    if (data.success) {
+                        document.getElementById('register-result').innerHTML = 
+                            `<div class="result success">✅ Registration successful! User: ${data.data.user.name}, Role: ${data.data.user.role}</div>`;
+                    } else {
+                        document.getElementById('register-result').innerHTML = 
+                            `<div class="result error">❌ Registration failed: ${data.message}</div>`;
+                    }
+                } catch (parseError) {
+                    document.getElementById('register-result').innerHTML = 
+                        `<div class="result error">❌ Parse error: ${text}</div>`;
+                }
+            } catch (error) {
+                console.log('Fetch error:', error);
+                document.getElementById('register-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function checkUsers() {
+            try {
+                const response = await fetch('http://localhost:5000/api/users/public-stats');
+                const text = await response.text();
+                const data = JSON.parse(text);
+                
+                document.getElementById('users-result').innerHTML = 
+                    `<div class="result success">✅ Current users in database: ${data.data.totalUsers}</div>`;
+                    
+                console.log('Current users:', data.data.totalUsers);
+            } catch (error) {
+                document.getElementById('users-result').innerHTML = 
+                    `<div class="result error">❌ Error checking users: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .summary { background: #f0f0f0; color: #333; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .working { color: #155724; }
+        .broken { color: #721c24; }
+        h2 { color: #333; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Final System Test</h1>
+    <p><strong>Test all major functionality:</strong></p>
+    
+    <div class="test-section">
+        <h2>🔐 Authentication Test</h2>
+        <button onclick="testAuth()">Test Login/Register</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 Dashboard Test</h2>
+        <button onclick="testDashboard()">Test Dashboard</button>
+        <div id="dashboard-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📚 Books Test</h2>
+        <button onclick="testBooks()">Test Books</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👥 Admin Test</h2>
+        <button onclick="testAdmin()">Test Admin</button>
+        <div id="admin-result"></div>
+    </div>
+
+    <script>
+        let testResults = {
+            auth: false,
+            dashboard: false,
+            books: false,
+            admin: false
+        };
+
+        async function testAuth() {
+            try {
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                
+                console.log('🔍 Testing authentication...');
+                console.log('Token:', token ? token.substring(0, 50) + '...' : 'None');
+                console.log('User:', user ? JSON.parse(user) : 'None');
+                
+                document.getElementById('auth-result').innerHTML = 
+                    `<div class="result ${token ? 'success' : 'error'}">
+                        ${token ? '✅ Token found' : '❌ No token'}<br>
+                        Token: ${token ? token.substring(0, 50) + '...' : 'None'}<br>
+                        User: ${user || 'None'}
+                    </div>`;
+                
+                testResults.auth = token && user;
+            } catch (error) {
+                console.error('❌ Auth test error:', error);
+                document.getElementById('auth-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testDashboard() {
+            try {
+                console.log('🔍 Testing dashboard...');
+                const response = await fetch('http://localhost:5173/dashboard');
+                const text = await response.text();
+                
+                if (response.ok && text.includes('Total Users:')) {
+                    document.getElementById('dashboard-result').innerHTML = 
+                        `<div class="result success">✅ Dashboard working! Shows user count</div>`;
+                    testResults.dashboard = true;
+                } else {
+                    document.getElementById('dashboard-result').innerHTML = 
+                        `<div class="result error">❌ Dashboard failed: Status ${response.status}</div>`;
+                }
+            } catch (error) {
+                console.error('❌ Dashboard test error:', error);
+                document.getElementById('dashboard-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testBooks() {
+            try {
+                console.log('🔍 Testing books...');
+                const response = await fetch('http://localhost:5173/books');
+                const text = await response.text();
+                
+                if (response.ok && text.includes('Accession No')) {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result success">✅ Books working! Shows book listing</div>`;
+                    testResults.books = true;
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result error">❌ Books failed: Status ${response.status}</div>`;
+                }
+            } catch (error) {
+                console.error('❌ Books test error:', error);
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAdmin() {
+            try {
+                console.log('🔍 Testing admin...');
+                const response = await fetch('http://localhost:5173/admin');
+                const text = await response.text();
+                
+                if (response.ok) {
+                    document.getElementById('admin-result').innerHTML = 
+                        `<div class="result success">✅ Admin working! Admin panel accessible</div>`;
+                    testResults.admin = true;
+                } else {
+                    document.getElementById('admin-result').innerHTML = 
+                        `<div class="result error">❌ Admin failed: Status ${response.status}</div>`;
+                }
+            } catch (error) {
+                console.error('❌ Admin test error:', error);
+                document.getElementById('admin-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-test all on load
+        window.onload = async function() {
+            console.log('🧪 Starting comprehensive system test...');
+            await testAuth();
+            await testDashboard();
+            await testBooks();
+            await testAdmin();
+            
+            // Show summary
+            const workingCount = Object.values(testResults).filter(result => result).length;
+            const totalCount = Object.keys(testResults).length;
+            const successRate = Math.round((workingCount / totalCount) * 100);
+            
+            document.body.innerHTML += `
+                <div class="summary">
+                    <h2>🎯 Test Results Summary</h2>
+                    <div class="working">✅ Working: ${workingCount}/${totalCount} (${successRate}%)</div>
+                    <div class="broken">❌ Broken: ${totalCount - workingCount}/${totalCount} (${100 - successRate}%)</div>
+                </div>
+            `;
+        };
+    </script>
+</body>
+</html>

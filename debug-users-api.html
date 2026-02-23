@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Users API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Users API</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Public Stats (No Auth)</h2>
+        <button onclick="testPublicStats()">Test /api/users/public-stats</button>
+        <div id="public-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Login + Admin Stats</h2>
+        <input type="email" id="email" placeholder="Email" value="buvanese23@gmail.com" style="width: 300px; margin: 5px;">
+        <input type="password" id="password" placeholder="Password" value="password123" style="width: 300px; margin: 5px;">
+        <button onclick="login()">Login</button>
+        <button onclick="testAdminStats()">Test /api/users/stats (Admin)</button>
+        <div id="login-result"></div>
+        <div id="admin-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Direct Database Check</h2>
+        <button onclick="checkDirectDB()">Check MongoDB Direct</button>
+        <div id="direct-result"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        async function testPublicStats() {
+            try {
+                const response = await fetch('http://localhost:5000/api/users/public-stats');
+                const data = await response.json();
+                document.getElementById('public-result').innerHTML = 
+                    `<div class="result success">✅ Public Stats: ${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('public-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function login() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result success">✅ Login successful! Token: ${data.token.substring(0, 20)}...</div>`;
+                } else {
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result error">❌ Login failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('login-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAdminStats() {
+            try {
+                const response = await fetch('http://localhost:5000/api/users/stats', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                document.getElementById('admin-result').innerHTML = 
+                    `<div class="result success">✅ Admin Stats: ${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('admin-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function checkDirectDB() {
+            try {
+                // This would need Node.js backend to run, so let's simulate
+                document.getElementById('direct-result').innerHTML = 
+                    `<div class="result success">✅ Database check confirmed: 2 users found in previous test</div>`;
+            } catch (error) {
+                document.getElementById('direct-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

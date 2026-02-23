@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .loading { background: #e2e3e5; color: #333; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Login Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Login Endpoint</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Health Endpoint</h2>
+        <button onclick="testHealth()">Test Health</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Auth Check</h2>
+        <button onclick="testAuthCheck()">Test Auth Check</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <script>
+        async function testLogin() {
+            try {
+                document.getElementById('login-result').innerHTML = 
+                    '<div class="loading">🔄 Testing login...</div>';
+                
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'buvanese23@gmail.com',
+                        password: 'buvanes'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result success">✅ Login successful!<br>
+                        User: ${data.data.user.name}<br>
+                        Email: ${data.data.user.email}<br>
+                        Role: ${data.data.user.role}<br>
+                        Token: ${data.data.token.substring(0, 30)}...</div>`;
+                } else {
+                    document.getElementById('login-result').innerHTML = 
+                        `<div class="result error">❌ Login failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('login-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                document.getElementById('health-result').innerHTML = 
+                    `<div class="result success">✅ Health check: ${data.status}</div>`;
+            } catch (error) {
+                document.getElementById('health-result').innerHTML = 
+                    `<div class="result error">❌ Health check failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function testAuthCheck() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result warning">⚠️ No token found. Please login first.</div>`;
+                    return;
+                }
+                
+                const response = await fetch('http://localhost:5000/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result success">✅ Auth check passed!<br>
+                        User: ${data.data.user.name}<br>
+                        Role: ${data.data.user.role}</div>`;
+                } else {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result error">❌ Auth check failed: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing backend with local MongoDB...');
+            testHealth();
+        };
+    </script>
+</body>
+</html>

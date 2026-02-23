@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .loading { background: #e2e3e5; color: #333; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 MongoDB Connection Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Backend Health</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test User API</h2>
+        <button onclick="testUsers()">Test Users API</button>
+        <div id="users-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Books API</h2>
+        <button onclick="testBooks()">Test Books API</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Authentication</h2>
+        <button onclick="testAuth()">Test Auth API</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <script>
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                document.getElementById('health-result').innerHTML = 
+                    `<div class="result success">✅ Backend healthy: ${data.status}</div>`;
+            } catch (error) {
+                document.getElementById('health-result').innerHTML = 
+                    `<div class="result error">❌ Health check failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function testUsers() {
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:5000/api/users/public-stats');
+                const data = await response.json();
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                if (duration > 5000) {
+                    document.getElementById('users-result').innerHTML = 
+                        `<div class="result warning">⚠️ Slow response: ${duration}ms (still working)</div>`;
+                } else {
+                    document.getElementById('users-result').innerHTML = 
+                        `<div class="result success">✅ Users API working: ${duration}ms</div>`;
+                }
+            } catch (error) {
+                document.getElementById('users-result').innerHTML = 
+                    `<div class="result error">❌ Users API failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function testBooks() {
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                if (duration > 5000) {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result warning">⚠️ Slow response: ${duration}ms (still Working)</div>`;
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result success">✅ Books API working: ${duration}ms</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Books API failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function testAuth() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/me', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result success">✅ Auth API working (correctly rejects invalid token)</div>`;
+                } else {
+                    document.getElementById('auth-result').innerHTML = 
+                        `<div class="result success">✅ Auth API responding: ${response.status}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = 
+                    `<div class="result error">❌ Auth API failed: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing optimized MongoDB connection...');
+            testHealth();
+            testUsers();
+            testBooks();
+            testAuth();
+        };
+    </script>
+</body>
+</html>

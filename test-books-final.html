@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Books Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Books Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Books API</h2>
+        <button onclick="testBooksAPI()">Test Books API</button>
+        <div id="books-result"></div>
+    </div>
+
+    <script>
+        async function testBooksAPI() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('books-result').innerHTML = 
+                        '<div class="result success">✅ Books API working!<br>Found ' + data.data.books.length + ' books</div>';
+                } else {
+                    document.getElementById('books-result').innerHTML = 
+                        '<div class="result error">❌ Books API failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                        '<div class="result error">❌ Error: ' + error.message + '</div>';
+                }
+        }
+        }
+        
+        window.onload = function() {
+            console.log('Testing Books page...');
+            testBooksAPI();
+        };
+    </script>
+</body>
+</html>

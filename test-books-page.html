@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Books Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .debug-info { background: #f0f0f0; color: #333; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>📚 Test Books Page</h1>
+    
+    <div class="test-section">
+        <h2>Test Books API</h2>
+        <button onclick="testBooksAPI()">Test Books API</button>
+        <div id="books-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Check Authentication</h2>
+        <button onclick="checkAuth()">Check Token</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Debug Info</h2>
+        <button onclick="showDebugInfo()">Show Debug Info</button>
+        <div id="debug-info"></div>
+    </div>
+
+    <script>
+        async function testBooksAPI() {
+            try {
+                console.log('🔍 Testing Books API...');
+                
+                const response = await fetch('http://localhost:5173/api/books', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const text = await response.text();
+                console.log('📥 Books API Response:', text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    console.log('📊 Parsed data:', data);
+                    
+                    if (data.success && data.data && data.data.books) {
+                        document.getElementById('books-result').innerHTML = 
+                            `<div class="result success">✅ Books API working!<br>
+                            Books found: ${data.data.books.length}<br>
+                            Total: ${data.data.pagination.total}<br>
+                            Page: ${data.data.pagination.page}</div>`;
+                    } else {
+                        document.getElementById('books-result').innerHTML = 
+                            `<div class="result error">❌ Books API failed or no data</div>`;
+                    }
+                } catch (parseError) {
+                    document.getElementById('books-result').innerHTML = 
+                        `<div class="result error">❌ Parse error: ${text}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('books-result').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            console.log('🔍 Checking authentication...');
+            console.log('Token:', token ? token.substring(0, 50) + '...' : 'None');
+            console.log('User:', user ? JSON.parse(user) : 'None');
+            
+            document.getElementById('auth-result').innerHTML = 
+                `<div class="result ${token ? 'success' : 'error'}">
+                    ${token ? '✅ Token found' : '❌ No token'}<br>
+                    Token: ${token ? token.substring(0, 50) + '...' : 'None'}<br>
+                    User: ${user || 'None'}
+                </div>`;
+        }
+        
+        function showDebugInfo() {
+            const debugInfo = {
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                timestamp: new Date().toISOString(),
+                localStorage: {
+                    token: localStorage.getItem('token'),
+                    user: localStorage.getItem('user')
+                }
+            };
+            
+            document.getElementById('debug-info').innerHTML = 
+                `<div class="debug-info">
+                    <strong>🔍 Debug Information:</strong><br>
+                    <strong>URL:</strong> ${debugInfo.url}<br>
+                    <strong>User Agent:</strong> ${debugInfo.userAgent}<br>
+                    <strong>Timestamp:</strong> ${debugInfo.timestamp}<br>
+                    <strong>Token:</strong> ${debugInfo.localStorage.token ? debugInfo.localStorage.token.substring(0, 50) + '...' : 'None'}<br>
+                    <strong>User:</strong> ${debugInfo.localStorage.user || 'None'}<br>
+                    <strong>Expected:</strong> If token exists, Books page should work<br>
+                    <strong>Test:</strong> <a href="http://localhost:5173/books" target="_blank">Open Books Page</a>
+                </div>`;
+        }
+    </script>
+</body>
+</html>

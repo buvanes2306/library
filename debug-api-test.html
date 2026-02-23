@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { border: 1px solid #ccc; padding: 15px; margin: 10px 0; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+        .error { background: #ffe6e6; color: red; }
+        .success { background: #e6ffe6; color: green; }
+    </style>
+</head>
+<body>
+    <h1>MERN Stack API Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Books API (No Auth)</h2>
+        <button onclick="testBooksAPI()">Test /api/books</button>
+        <div id="booksResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Auth Flow</h2>
+        <button onclick="testAuthFlow()">Test Login → Books</button>
+        <div id="authResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Test CORS</h2>
+        <button onclick="testCORS()">Test CORS Headers</button>
+        <div id="corsResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testBooksAPI() {
+            const result = document.getElementById('booksResult');
+            try {
+                console.log('Testing books API...');
+                const response = await fetch('http://localhost:5000/api/books', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Books API Response:', data);
+                
+                result.innerHTML = `
+                    <div class="${response.ok ? 'success' : 'error'}">
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Success:</strong> ${data.success}<br>
+                        <strong>Books Count:</strong> ${data.data?.books?.length || 0}<br>
+                        <strong>Total:</strong> ${data.data?.pagination?.total || 0}<br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Books API Error:', error);
+                result.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAuthFlow() {
+            const result = document.getElementById('authResult');
+            try {
+                console.log('Step 1: Login...');
+                const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                console.log('Login Response:', loginData);
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed: ' + loginData.message);
+                }
+                
+                console.log('Step 2: Fetch books with auth...');
+                const booksResponse = await fetch('http://localhost:5000/api/books', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const booksData = await booksResponse.json();
+                console.log('Books with Auth Response:', booksData);
+                
+                result.innerHTML = `
+                    <div class="success">
+                        <strong>Login Status:</strong> ${loginResponse.ok ? 'Success' : 'Failed'}<br>
+                        <strong>Books Status:</strong> ${booksResponse.ok ? 'Success' : 'Failed'}<br>
+                        <strong>User:</strong> ${loginData.data?.user?.email}<br>
+                        <strong>Books Count:</strong> ${booksData.data?.books?.length || 0}<br>
+                        <pre>${JSON.stringify(booksData, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Auth Flow Error:', error);
+                result.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testCORS() {
+            const result = document.getElementById('corsResult');
+            try {
+                const response = await fetch('http://localhost:5000/api/books', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'http://localhost:5173',
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                result.innerHTML = `
+                    <div class="${response.ok ? 'success' : 'error'}">
+                        <strong>CORS Status:</strong> ${response.status}<br>
+                        <strong>Allow-Origin:</strong> ${corsHeaders['Access-Control-Allow-Origin']}<br>
+                        <strong>Allow-Credentials:</strong> ${corsHeaders['Access-Control-Allow-Credentials']}<br>
+                        <strong>Allow-Methods:</strong> ${corsHeaders['Access-Control-Allow-Methods']}<br>
+                        <strong>Allow-Headers:</strong> ${corsHeaders['Access-Control-Allow-Headers']}<br>
+                    </div>
+                `;
+            } catch (error) {
+                result.innerHTML = `<div class="error">CORS Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-run tests on page load
+        window.onload = () => {
+            testBooksAPI();
+            testCORS();
+        };
+    </script>
+</body>
+</html>
