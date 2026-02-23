@@ -23,11 +23,11 @@ export const getBooks = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const { search, department, status, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+  const { search, department, status, sortBy = 'createdAt', sortOrder = 'desc', publishedYear } = req.query;
 
   // Log database connection
-  console.log('📊 Database:', mongoose.connection.name);
-  console.log('🔗 Connection state:', mongoose.connection.readyState);
+  console.log(' Database:', mongoose.connection.name);
+  console.log(' Connection state:', mongoose.connection.readyState);
   
   let query = {};
 
@@ -52,6 +52,7 @@ export const getBooks = asyncHandler(async (req, res) => {
       orConditions.push({ authors: { $regex: regexPattern, $options: 'i' } });
       orConditions.push({ publisher: { $regex: regexPattern, $options: 'i' } });
       orConditions.push({ department: { $regex: regexPattern, $options: 'i' } });
+      orConditions.push({ bookId: { $regex: regexPattern, $options: 'i' } });
       
       // For numeric search, also search accNo as number using $expr to bypass Mongoose schema
       if (isNumericSearch) {
@@ -68,12 +69,16 @@ export const getBooks = asyncHandler(async (req, res) => {
     }
   }
 
+  if (publishedYear) {
+    query.publishedYear = parseInt(publishedYear);
+  }
+
   if (department) {
-    query.department = department;
+    query.department = { $regex: department.trim(), $options: 'i' };
   }
 
   if (status) {
-    query.status = status;
+    query.status = { $regex: status.trim(), $options: 'i' };
   }
 
   const sortOptions = {};

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sorting Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; cursor: pointer; }
+        th:hover { background-color: #e9ecef; }
+        .sort-indicator { margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔄 Sorting Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Sorting by Different Columns</h2>
+        <button onclick="testSortByBookId()">Sort by Book ID (ASC)</button>
+        <button onclick="testSortByBookIdDesc()">Sort by Book ID (DESC)</button>
+        <button onclick="testSortByTitle()">Sort by Title (ASC)</button>
+        <button onclick="testSortByAccNo()">Sort by AccNo (ASC)</button>
+        <div id="sort-result"></div>
+    </div>
+
+    <script>
+        async function testSortByBookId() {
+            await testSorting('bookId', 'asc');
+        }
+
+        async function testSortByBookIdDesc() {
+            await testSorting('bookId', 'desc');
+        }
+
+        async function testSortByTitle() {
+            await testSorting('title', 'asc');
+        }
+
+        async function testSortByAccNo() {
+            await testSorting('accNo', 'asc');
+        }
+
+        async function testSorting(sortBy, sortOrder) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?sortBy=${sortBy}&sortOrder=${sortOrder}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<div class="result success">✅ Sorting working! Found ' + data.data.books.length + ' books</div>';
+                    
+                    // Create table to show sorted data
+                    html += '<table>';
+                    html += '<tr><th>Book ID</th><th>AccNo</th><th>Title</th><th>Author</th></tr>';
+                    
+                    data.data.books.slice(0, 5).forEach(book => {
+                        const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                        html += '<tr>';
+                        html += '<td>' + (book.bookId || 'N/A') + '</td>';
+                        html += '<td>' + book.accNo + '</td>';
+                        html += '<td>' + book.title + '</td>';
+                        html += '<td>' + authorDisplay + '</td>';
+                        html += '</tr>';
+                    });
+                    
+                    html += '</table>';
+                    html += '<p><strong>Sort:</strong> ' + sortBy + ' (' + sortOrder + ')</p>';
+                    
+                    document.getElementById('sort-result').innerHTML = html;
+                } else {
+                    document.getElementById('sort-result').innerHTML = 
+                        '<div class="result error">❌ Sorting failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('sort-result').innerHTML = 
+                    '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing sorting functionality...');
+            testSortByBookId();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BookID Column Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>📚 BookID Column Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Books API with BookID</h2>
+        <button onclick="testBooksWithBookId()">Test Books with BookID</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testBooksWithBookId() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<div class="result success">✅ Books API working! Found ' + data.data.books.length + ' books</div>';
+                    
+                    // Create table to show bookId data
+                    html += '<table>';
+                    html += '<tr><th>Book ID</th><th>AccNo</th><th>Title</th><th>Author</th></tr>';
+                    
+                    data.data.books.slice(0, 5).forEach(book => {
+                        const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                        html += '<tr>';
+                        html += '<td>' + (book.bookId || 'N/A') + '</td>';
+                        html += '<td>' + book.accNo + '</td>';
+                        html += '<td>' + book.title + '</td>';
+                        html += '<td>' + authorDisplay + '</td>';
+                        html += '</tr>';
+                    });
+                    
+                    html += '</table>';
+                    
+                    document.getElementById('test-result').innerHTML = html;
+                } else {
+                    document.getElementById('test-result').innerHTML = 
+                        '<div class="result error">❌ Books API failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('test-result').innerHTML = 
+                    '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing BookID column...');
+            testBooksWithBookId();
+        };
+    </script>
+</body>
+</html>

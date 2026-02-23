@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Departments Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        input, select { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .dept-list { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🏢 All Departments Test</h1>
+    
+    <div class="test-section">
+        <h2>Available Department Options</h2>
+        <div class="dept-list">
+            <h3>📋 Department Filter Options:</h3>
+            <ul>
+                <li>Information Technology</li>
+                <li>Computer Science</li>
+                <li>Electrical</li>
+                <li>Mechanical</li>
+                <li>Civil</li>
+                <li>Electronics</li>
+                <li>General</li>
+                <li>Reference</li>
+            </ul>
+        </div>
+        
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label>Department</label>
+                <select id="department">
+                    <option value="">All Departments</option>
+                    <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Mechanical">Mechanical</option>
+                    <option value="Civil">Civil</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="General">General</option>
+                    <option value="Reference">Reference</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>Status</label>
+                <select id="status">
+                    <option value="">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Issued">Issued</option>
+                    <option value="Reserved">Reserved</option>
+                    <option value="Lost">Lost</option>
+                    <option value="Damaged">Damaged</option>
+                </select>
+            </div>
+        </div>
+        
+        <button onclick="testDepartmentFilters()">Test Department Filters</button>
+        <div id="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Department Tests</h2>
+        <button onclick="testIT()">Test Information Technology</button>
+        <button onclick="testCS()">Test Computer Science</button>
+        <button onclick="testElectrical()">Test Electrical</button>
+        <button onclick="testMechanical()">Test Mechanical</button>
+        <div id="quick-results"></div>
+    </div>
+
+    <script>
+        async function testDepartmentFilters() {
+            const department = document.getElementById('department').value;
+            const status = document.getElementById('status').value;
+            
+            const params = new URLSearchParams();
+            if (department) params.append('department', department);
+            if (status) params.append('status', status);
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/books?' + params.toString());
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('test-result').innerHTML = 
+                        '<div class="result success">✅ Department filter working! Found ' + data.data.books.length + ' books</div>';
+                } else {
+                    document.getElementById('test-result').innerHTML = 
+                        '<div class="result error">❌ Department filter failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('test-result').innerHTML = 
+                    '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        async function testIT() {
+            await testSingleDepartment('INFORMATION TECHNOLOGY');
+        }
+
+        async function testCS() {
+            await testSingleDepartment('Computer Science');
+        }
+
+        async function testElectrical() {
+            await testSingleDepartment('Electrical');
+        }
+
+        async function testMechanical() {
+            await testSingleDepartment('Mechanical');
+        }
+
+        async function testSingleDepartment(dept) {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?department=' + encodeURIComponent(dept));
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('quick-results');
+                if (data.success) {
+                    resultDiv.innerHTML = '<div class="result success">✅ ' + dept + ' department: ' + data.data.books.length + ' books found</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ ' + dept + ' department filter failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('quick-results').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing all departments...');
+            testIT();
+        };
+    </script>
+</body>
+</html>

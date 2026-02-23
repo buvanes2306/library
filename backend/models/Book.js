@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const bookSchema = new mongoose.Schema({
+  bookId: {
+    type: String,
+    trim: true,
+    uppercase: true
+  },
   accNo: {
     type: String,
     required: [true, 'Accession number is required'],
@@ -87,7 +92,7 @@ const bookSchema = new mongoose.Schema({
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
   }
 }, {
   timestamps: true

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Department Flow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 10px 0; }
+        select { width: 250px; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .debug-info { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .db-stats { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Complete Department Flow Test</h1>
+    
+    <div class="debug-info">
+        <h3>🐛 Debug Information</h3>
+        <p><strong>Database has:</strong> "COMPUTER SCIENCE" (78 books)</p>
+        <p><strong>Frontend sends:</strong> "Computer Science"</p>
+        <p><strong>Backend uses:</strong> Case-insensitive regex</p>
+        <p><strong>Expected:</strong> Should find 78 books</p>
+    </div>
+    
+    <div class="db-stats">
+        <h3>📊 Database Department Stats</h3>
+        <p><strong>INFORMATION TECHNOLOGY:</strong> 67 books</p>
+        <p><strong>COMPUTER SCIENCE:</strong> 78 books</p>
+        <p><strong>ELECTRONICS:</strong> 48 books</p>
+        <p><strong>GENERAL:</strong> 6 books</p>
+        <p><strong>MATHS:</strong> 2 books</p>
+        <p><strong>Total:</strong> 201 books</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Department Filter Flow</h2>
+        
+        <div class="filter-item">
+            <label>Department Filter (Frontend Simulation)</label>
+            <select id="department" onchange="testDepartmentFilter()">
+                <option value="">All Departments</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                <option value="ELECTRONICS">Electronics</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+                <option value="General">General</option>
+                <option value="Maths">Maths</option>
+                <option value="Reference">Reference</option>
+            </select>
+        </div>
+        
+        <button onclick="testDepartmentFilter()">Test Current Filter</button>
+        <button onclick="clearFilter()">Clear Filter</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testDepartmentFilter() {
+            const department = document.getElementById('department').value;
+            
+            const params = new URLSearchParams();
+            if (department) {
+                params.append('department', department);
+            }
+            params.append('limit', '5');
+            
+            console.log('🔍 Testing department filter flow:');
+            console.log('  Frontend sends:', department);
+            console.log('  API call:', `http://localhost:5000/api/books?${params.toString()}`);
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('  API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Department Filter Test Complete</div>`;
+                    html += `<p><strong>Filter Applied:</strong> "${department || 'All Departments'}"</p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Books Found:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Department: ${book.department}</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>AccNo: ${book.accNo} | Year: ${book.publishedYear} | BookID: ${book.bookId}</small>
+                                </div>
+                            `;
+                        });
+                        
+                        // Check if results match expectations
+                        const expectedCounts = {
+                            'Computer Science': 78,
+                            'INFORMATION TECHNOLOGY': 67,
+                            'ELECTRONICS': 48,
+                            'Electrical': 0,
+                            'Mechanical': 0,
+                            'Civil': 0,
+                            'General': 6,
+                            'Maths': 2,
+                            'Reference': 0
+                        };
+                        
+                        const expected = expectedCounts[department] || 201;
+                        if (data.data.books.length === expected || (department === '' && data.data.books.length === 201)) {
+                            html += '<div class="result success">✅ Results match expectations!</div>';
+                        } else {
+                            html += `<div class="result error">❌ Expected ${expected} books, got ${data.data.books.length}</div>`;
+                        }
+                    } else {
+                        html += '<p>No books found with this department filter.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearFilter() {
+            document.getElementById('department').value = '';
+            testDepartmentFilter();
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Complete department filter flow test...');
+            testDepartmentFilter();
+        };
+    </script>
+</body>
+</html>

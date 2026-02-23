@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔍 Single Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        select, input { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .highlight { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Single Search Test</h1>
+    
+    <div class="test-section">
+        <h3>✅ Single Search - IMPLEMENTED!</h3>
+        <p><strong>Issue:</strong> Duplicate search inputs were confusing users</p>
+        <p><strong>Fix:</strong> Removed duplicate search, kept only main search bar</p>
+        <p><strong>Result:</strong> Clean UI with single, prominent search option</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Test Single Search Layout</h2>
+        
+        <div class="filter-grid">
+            <div class="filter-item" style="grid-column: span 2;">
+                <label>Search Books (Single Search Bar)</label>
+                <input type="text" placeholder="Search by title, author, publisher, accession number..." style="width: 100%; height: 48px; padding: 8px; font-size: 14px;">
+                <small><em>Only one search bar - no duplicates!</em></small>
+            </div>
+            
+            <div class="filter-item">
+                <label>Department</label>
+                <select>
+                    <option value="">All Departments</option>
+                    <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                    <option value="COMPUTER SCIENCE">Computer Science</option>
+                    <option value="ELECTRONICS">Electronics</option>
+                    <option value="GENERAL">General</option>
+                    <option value="MATHS">Maths</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Published Year</label>
+                <input type="number" placeholder="e.g., 2023" min="1900" max="2100">
+            </div>
+            
+            <div class="filter-item">
+                <label>Status</label>
+                <select>
+                    <option value="">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Issued">Issued</option>
+                </select>
+            </div>
+        </div>
+        
+        <button onclick="testSingleSearch()">Test Single Search</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testSingleSearch() {
+            const searchTerm = document.querySelector('input[type="text"]').value;
+            const department = document.querySelector('select').value;
+            
+            const params = new URLSearchParams();
+            if (searchTerm) params.append('search', searchTerm);
+            if (department) params.append('department', department);
+            params.append('limit', '5');
+            
+            console.log('🔍 Testing single search:', { searchTerm, department });
+            
+            try {
+                const response = await fetch(`http://localhost:5002/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Single Search Working!</div>`;
+                    html += `<p><strong>Search Term:</strong> "${searchTerm}"</p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Dept: ${book.department}</span> | 
+                                    <span class="status ${book.status === 'Available' ? 'available' : 'issued'}">${book.status}</span><br>
+                                    <small>Year: ${book.publishedYear} | AccNo: ${book.accNo}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with this search.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing single search layout...');
+        };
+    </script>
+</body>
+</html>

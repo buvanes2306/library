@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📋 Admin Panel Lost Status Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        select, input { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .lost { background: #f8d7da; color: #721c24; }
+        .highlight { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>📋 Admin Panel Lost Status Test</h1>
+    
+    <div class="test-section">
+        <h3>✅ Lost Status - ADDED!</h3>
+        <p><strong>Request:</strong> Add "Lost" option to status panel in admin panel</p>
+        <p><strong>Implementation:</strong> Added Lost option to status dropdown</p>
+        <p><strong>Result:</strong> Admin can now mark books as Lost</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Test Lost Status in Books Page</h2>
+        
+        <div class="filter-item">
+            <label>Status Filter (Now includes Lost)</label>
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="Available">Available</option>
+                <option value="Issued">Issued</option>
+                <option value="Lost">Lost</option>
+            </select>
+            <small><em>Lost option now available in both Admin Panel and Books page!</em></small>
+        </div>
+        
+        <button onclick="testLostStatus()">Test Lost Status</button>
+        <button onclick="testAllStatus()">Test All Status</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testLostStatus() {
+            const status = 'Lost';
+            
+            const params = new URLSearchParams();
+            params.append('status', status);
+            params.append('limit', '5');
+            
+            console.log('🔍 Testing Lost status filter:', status);
+            console.log('📡 API URL:', `http://localhost:5002/api/books?${params.toString()}`);
+            
+            try {
+                const response = await fetch(`http://localhost:5002/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Lost Status Working!</div>`;
+                    html += `<p><strong>Status:</strong> ${status}</p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Lost Books:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Dept: ${book.department}</span> | 
+                                    <span class="status lost">${book.status}</span><br>
+                                    <small>Year: ${book.publishedYear} | AccNo: ${book.accNo}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No lost books found.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        async function testAllStatus() {
+            const params = new URLSearchParams();
+            params.append('limit', '5');
+            
+            try {
+                const response = await fetch(`http://localhost:5002/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ All Status Working!</div>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books (All Status):</h4>';
+                        data.data.books.forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 
+                                              book.status === 'Issued' ? 'issued' : 'lost';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Dept: ${book.department}</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>Year: ${book.publishedYear} | AccNo: ${book.accNo}</small>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing Lost status in Admin Panel...');
+        };
+    </script>
+</body>
+</html>

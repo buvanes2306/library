@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Search Test Complete</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20pxpx 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .search-box { padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Final Search Test Complete</h1>
+    
+    <div class="test-section">
+        <h2>📚 Real Book Data Structure</h2>
+        <div class="book-item">
+            <h3>Sample Book Found:</h3>
+            <p><strong>Title:</strong> Operation Research Concepts and Cases</p>
+            <p><strong>Authors:</strong> Hillier, Frederick S.</p>
+            <p><strong>AccNo:</strong> 5916</p>
+            <p><strong>Publisher:</strong> McGraw-Hill</p>
+            <p><strong>Department:</strong> INFORMATION TECHNOLOGY</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Search Test Results</h2>
+        <button onclick="runAllTests()">Run All Search Tests</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        async function runAllTests() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<div class="result">🧪 Running search tests...</div>';
+            
+            let html = '';
+            
+            // Test 1: Search by title
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=operation');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length > 0) {
+                    html += '<div class="result success">✅ Title Search: Found ' + data.data.books.length + ' books for "operation"</div>';
+                } else {
+                    html += '<div class="result error">❌ Title Search: No books found for "operation"</div>';
+                }
+            } catch (error) {
+                html += '<div class="result error">❌ Title Search Error: ' + error.message + '</div>';
+            }
+            
+            // Test 2: Search by author
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=hillier');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length > 0) {
+                    html += '<div class="result success">✅ Author Search: Found ' + data.data.books.length + ' books for "hillier"</div>';
+                } else {
+                    html += '<div class="result error">❌ Author Search: No books found for "hillier"</div>';
+                }
+            } catch (error) {
+                html += '<div class="result error">❌ Author Search Error: ' + error.message + '</div>';
+            }
+            
+            // Test 3: Search by accession number
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=5916');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length > 0) {
+                    html += '<div class="result success">✅ AccNo Search: Found ' + data.data.books.length + ' books for "5916"</div>';
+                } else {
+                    html += '<div class="result error">❌ AccNo Search: No books found for "5916"</div>';
+                }
+            } catch (error) {
+                html += '<div class="result error">❌ AccNo Search Error: ' + error.message + '</div>';
+            }
+            
+            // Test 4: Search by publisher
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=mcgraw');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length > 0) {
+                    html += '<div class="result success">✅ Publisher Search: Found ' + data.data.books.length + ' books for "mcgraw"</div>';
+                } else {
+                    html += '<div class="result error">❌ Publisher Search: No books found for "mcgraw"</div>';
+                }
+            } catch (error) {
+                html += '<div class="result error">❌ Publisher Search Error: ' + error.message + '</div>';
+            }
+            
+            // Test 5: Search with no results
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=xyz123');
+                const data = await response.json();
+                
+                if (data.success && data.data.books.length === 0) {
+                    html += '<div class="result success">✅ No Results Search: Correctly returned 0 books for "xyz123"</div>';
+                } else {
+                    html += '<div class="result error">❌ No Results Search: Unexpected results for "xyz123"</div>';
+                }
+            } catch (error) {
+                html += '<div class="result error">❌ No Results Search Error: ' + error.message + '</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Final search test complete...');
+            runAllTests();
+        };
+    </script>
+</body>
+</html>

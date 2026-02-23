@@ -22,8 +22,10 @@ const Books = () => {
   const [books, setBooks] = useState([])
   const [pagination, setPagination] = useState({ page: 1, limit: 10 })
   const [loading, setLoading] = useState(false)
-  const [filters, setFilters] = useState({ department: '', status: '' })
+  const [filters, setFilters] = useState({ department: '', status: '', publishedYear: '' })
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
+  const [sortConfig, setSortConfig] = useState({ key: 'bookId', direction: 'asc' })
+  const [yearInputValue, setYearInputValue] = useState('')
 
   const fetchBooks = async () => {
     try {
@@ -32,11 +34,15 @@ const Books = () => {
       const params = new URLSearchParams({
         page: pagination.page,
         limit: pagination.limit,
-        ...(searchTerm && { search: searchTerm })
+        ...(searchTerm && { search: searchTerm }),
+        ...(filters.department && { department: filters.department }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.publishedYear && { publishedYear: filters.publishedYear }),
+        ...(sortConfig.key && { sortBy: sortConfig.key, sortOrder: sortConfig.direction })
       })
 
-      console.log('📡 Books: API call to:', `/api/books?${params}`)
-      const response = await axios.get(`/api/books?${params}`)
+      console.log('📡 Books: API call to:', `http://localhost:5002/api/books?${params}`)
+      const response = await axios.get(`http://localhost:5002/api/books?${params}`)
       console.log('📚 Books: API response:', response.data)
       
       // Normalize IDs - convert _id to id
@@ -55,9 +61,17 @@ const Books = () => {
     }
   }
 
+  const handleSort = (key) => {
+    let direction = 'asc'
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
   useEffect(() => {
     fetchBooks()
-  }, [pagination.page, searchTerm])
+  }, [pagination.page, searchTerm, sortConfig, filters])
 
   
   
@@ -65,6 +79,32 @@ const Books = () => {
 
   const handlePageChange = (page) => {
     setPagination(prev => ({ ...prev, page }))
+  }
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target
+    setFilters(prev => ({ ...prev, [name]: value }))
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
+  const handleYearChange = (e) => {
+    const value = e.target.value
+    setYearInputValue(value)
+    
+    // Only update filter when user has entered a complete year (4 digits) or cleared it
+    if (value.length === 4 || value === '') {
+      setFilters(prev => ({ ...prev, publishedYear: value }))
+      setPagination(prev => ({ ...prev, page: 1 }))
+    }
+  }
+
+  const handleYearKeyPress = (e) => {
+    // Allow search when Enter is pressed
+    if (e.key === 'Enter') {
+      const value = e.target.value
+      setFilters(prev => ({ ...prev, publishedYear: value }))
+      setPagination(prev => ({ ...prev, page: 1 }))
+    }
   }
 
   const handleSearch = (e) => {
@@ -130,56 +170,135 @@ const Books = () => {
         )}
       </div>
 
-      {/* Search */}
+      {/* Filters */}
       <div className="card">
-        <form onSubmit={handleSearch} className="flex gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Search Bar - Bigger */}
+          <div className="md:col-span-2 lg:col-span-4">
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+              Search Books
+            </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
+                id="search"
                 name="search"
-                placeholder="Search books..."
+                placeholder="Search by title, author, publisher, accession number..."
                 value={searchTerm}
                 onChange={handleChange}
-                className="input-field pl-10 pr-4"
+                className="input-field pl-10 pr-4 h-12 w-full"
               />
             </div>
           </div>
-          <button
-            type="submit"
-            className="btn btn-primary"
-          >
-            Search
-          </button>
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm('')
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}
-              className="btn btn-secondary"
+
+          {/* Department Filter */}
+          <div>
+            <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+              Department
+            </label>
+            <select
+              id="department"
+              name="department"
+              value={filters.department}
+              onChange={handleFilterChange}
+              className="input-field"
             >
-              Clear
-            </button>
-          )}
-        </form>
+              <option value="">All Departments</option>
+              <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+              <option value="COMPUTER SCIENCE">Computer Science</option>
+              <option value="ELECTRONICS">Electronics</option>
+              <option value="GENERAL">General</option>
+              <option value="MATHS">Maths</option>
+            </select>
+          </div>
+
+          {/* Published Year Filter */}
+          <div>
+            <label htmlFor="publishedYear" className="block text-sm font-medium text-gray-700 mb-1">
+              Published Year
+            </label>
+            <input
+              type="number"
+              id="publishedYear"
+              name="publishedYear"
+              placeholder="e.g., 2023"
+              value={yearInputValue}
+              onChange={handleYearChange}
+              onKeyPress={handleYearKeyPress}
+              className="input-field"
+              min="1900"
+              max="2100"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className="input-field"
+            >
+              <option value="">All Status</option>
+              <option value="Available">Available</option>
+              <option value="Issued">Issued</option>
+              <option value="Lost">Lost</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Clear Filters Button */}
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setFilters({ department: '', status: '', publishedYear: '' })
+              setYearInputValue('')
+              setSearchTerm('')
+              setPagination(prev => ({ ...prev, page: 1 }))
+            }}
+            className="btn btn-secondary"
+          >
+            Clear All Filters
+          </button>
+        </div>
       </div>
       <div className="card">
         <div className="table-container">
           <table className="table">
             <thead className="table-header">
               <tr>
-                <th className="table-header-cell">Accession No</th>
-                <th className="table-header-cell">Title</th>
-                <th className="table-header-cell">Author</th>
-                <th className="table-header-cell">Publisher</th>
-                <th className="table-header-cell">Published Year</th>
-                <th className="table-header-cell">Department</th>
-                <th className="table-header-cell">Status</th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('bookId')}>
+                  Book ID {sortConfig.key === 'bookId' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('accNo')}>
+                  Accession No {sortConfig.key === 'accNo' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('title')}>
+                  Title {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('author')}>
+                  Author {sortConfig.key === 'author' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('publisher')}>
+                  Publisher {sortConfig.key === 'publisher' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('publishedYear')}>
+                  Published Year {sortConfig.key === 'publishedYear' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('department')}>
+                  Department {sortConfig.key === 'department' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="table-header-cell cursor-pointer hover:bg-gray-50" onClick={() => handleSort('status')}>
+                  Status {sortConfig.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th className="table-header-cell">Location</th>
                 {user?.role === 'admin' && (
                   <th className="table-header-cell">Actions</th>
@@ -189,7 +308,7 @@ const Books = () => {
             <tbody className="table-body">
               {books.length === 0 ? (
                 <tr>
-                  <td colSpan={user?.role === 'admin' ? 9 : 8} className="px-6 py-12 text-center">
+                  <td colSpan={user?.role === 'admin' ? 10 : 9} className="px-6 py-12 text-center">
                     <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No books found</h3>
                     <p className="mt-1 text-sm text-gray-500">
@@ -202,6 +321,7 @@ const Books = () => {
               ) : (
                 books.map((book) => (
                   <tr key={book.id} className="table-row">
+                    <td className="table-cell font-medium">{book.bookId || 'N/A'}</td>
                     <td className="table-cell font-medium">{book.accNo}</td>
                     <td className="table-cell">
                       <Link

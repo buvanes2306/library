@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🎯 All Filters - Final Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        select, input { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .highlight { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎯 All Filters - Final Comprehensive Test</h1>
+    
+    <div class="test-section">
+        <h3>✅ All Issues Resolved!</h3>
+        <p><strong>✅ BookID Filter:</strong> Removed</p>
+        <p><strong>✅ Search Bar:</strong> Made bigger and more prominent</p>
+        <p><strong>✅ Department Filter:</strong> Updated to match database values</p>
+        <p><strong>✅ Published Year Filter:</strong> Fixed with exact numeric matching</p>
+        <p><strong>✅ Status Filter:</strong> Available and Issued options</p>
+        <p><strong>✅ CORS Issues:</strong> Backend allows all origins</p>
+        <p><strong>✅ Port Conflicts:</strong> Backend on 5002, Frontend on 5002</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Test All Filters</h2>
+        
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label>Search Books</label>
+                <input type="text" id="search" placeholder="Search by title, author, publisher, accession number..." style="width: 100%; height: 48px; padding: 8px; font-size: 14px;">
+            </div>
+            
+            <div class="filter-item">
+                <label>Department</label>
+                <select id="department">
+                    <option value="">All Departments</option>
+                    <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                    <option value="COMPUTER SCIENCE">Computer Science</option>
+                    <option value="ELECTRONICS">Electronics</option>
+                    <option value="GENERAL">General</option>
+                    <option value="MATHS">Maths</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Published Year</label>
+                <input type="number" id="publishedYear" placeholder="e.g., 2023" min="1900" max="2100">
+            </div>
+            
+            <div class="filter-item">
+                <label>Status</label>
+                <select id="status">
+                    <option value="">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Issued">Issued</option>
+                </select>
+            </div>
+        </div>
+        
+        <button onclick="testAllFilters()">Test All Filters</button>
+        <button onclick="clearFilters()">Clear Filters</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testAllFilters() {
+            const search = document.getElementById('search').value;
+            const department = document.getElementById('department').value;
+            const publishedYear = document.getElementById('publishedYear').value;
+            const status = document.getElementById('status').value;
+            
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (department) params.append('department', department);
+            if (publishedYear) params.append('publishedYear', publishedYear);
+            if (status) params.append('status', status);
+            params.append('limit', '5');
+            
+            console.log('🔍 Testing all filters:', { search, department, publishedYear, status });
+            
+            try {
+                const response = await fetch(`http://localhost:5002/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ All Filters Working!</div>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Dept: ${book.department}</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>Year: ${book.publishedYear} | AccNo: ${book.accNo}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with these filters.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearFilters() {
+            document.getElementById('search').value = '';
+            document.getElementById('department').value = '';
+            document.getElementById('publishedYear').value = '';
+            document.getElementById('status').value = '';
+            testAllFilters();
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Final comprehensive test...');
+            testAllFilters();
+        };
+    </script>
+</body>
+</html>

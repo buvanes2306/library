@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        select { padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        .log { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend Debug Test</h1>
+    
+    <div class="debug-section">
+        <h2>Simulate Frontend Filter Change</h2>
+        <p>Testing if filter changes trigger API calls correctly...</p>
+        
+        <select id="department" onchange="simulateFilterChange()">
+            <option value="">All Departments</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+            <option value="ELECTRONICS">Electronics</option>
+        </select>
+        
+        <button onclick="simulateFilterChange()">Test Change</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+        
+        <div id="log-container" class="log"></div>
+    </div>
+
+    <script>
+        let filterState = { department: '' };
+        let paginationState = { page: 1 };
+        
+        function log(message) {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function simulateFilterChange() {
+            const select = document.getElementById('department');
+            const value = select.value;
+            
+            log(`🔄 Filter changed to: "${value}"`);
+            
+            // Simulate frontend filter change
+            filterState.department = value;
+            paginationState.page = 1;
+            
+            log(`📊 New filter state: ${JSON.stringify(filterState)}`);
+            log(`📊 New pagination state: ${JSON.stringify(paginationState)}`);
+            
+            // Simulate API call
+            makeAPICall();
+        }
+        
+        async function makeAPICall() {
+            const { department } = filterState;
+            const { page } = paginationState;
+            
+            log(`🌐 Making API call with department: "${department}"`);
+            
+            try {
+                const params = new URLSearchParams();
+                if (department) params.append('department', department);
+                params.append('page', page);
+                params.append('limit', '5');
+                
+                const url = `http://localhost:5001/api/books?${params.toString()}`;
+                log(`📡 API URL: ${url}`);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                log(`📡 API Response: ${data.success ? 'Success' : 'Failed'}`);
+                log(`📚 Books found: ${data.data?.books?.length || 0}`);
+                
+                if (data.data?.books?.length > 0) {
+                    log(`📋 First book: ${data.data.books[0].title}`);
+                    log(`📋 Department: ${data.data.books[0].department}`);
+                }
+                
+            } catch (error) {
+                log(`❌ API Error: ${error.message}`);
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            log('🧪 Frontend debug test started');
+            log('📋 Select "Computer Science" and test');
+        };
+    </script>
+</body>
+</html>

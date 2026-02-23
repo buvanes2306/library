@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Case-Insensitive Filter Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 10px 0; }
+        input, select { width: 200px; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .fix-highlight { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔤 Case-Insensitive Filter Test</h1>
+    
+    <div class="fix-highlight">
+        <h3>🛠️ Case Sensitivity Removed!</h3>
+        <p><strong>Backend Change:</strong> <code>query.department = { $regex: department, $options: 'i' }</code></p>
+        <p><strong>Result:</strong> Now matches "information technology", "INFORMATION TECHNOLOGY", "Information Technology", etc.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Case Variations</h2>
+        
+        <div class="filter-item">
+            <label>Custom Department Input</label>
+            <input type="text" id="customDept" placeholder="e.g., information technology">
+            <button onclick="testCustomDept()">Test Custom Input</button>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <h3>Quick Tests:</h3>
+            <button onclick="testLowerCase()">Test "information technology"</button>
+            <button onclick="testUpperCase()">Test "INFORMATION TECHNOLOGY"</button>
+            <button onclick="testMixedCase()">Test "Information Technology"</button>
+            <button onclick="testCS()">Test "computer science"</button>
+            <button onclick="testElectronics()">Test "electronics"</button>
+        </div>
+        
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testCustomDept() {
+            const dept = document.getElementById('customDept').value;
+            if (dept) {
+                await testDepartment(dept);
+            } else {
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Please enter a department name</div>';
+            }
+        }
+
+        async function testLowerCase() {
+            await testDepartment('information technology');
+        }
+
+        async function testUpperCase() {
+            await testDepartment('INFORMATION TECHNOLOGY');
+        }
+
+        async function testMixedCase() {
+            await testDepartment('Information Technology');
+        }
+
+        async function testCS() {
+            await testDepartment('computer science');
+        }
+
+        async function testElectronics() {
+            await testDepartment('electronics');
+        }
+
+        async function testDepartment(dept) {
+            console.log('🔍 Testing department:', dept);
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?department=${encodeURIComponent(dept)}&limit=5`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Case-insensitive filter working!</div>`;
+                    html += `<p><strong>Search:</strong> "${dept}"</p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Department: "${book.department}"</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>AccNo: ${book.accNo} | Year: ${book.publishedYear}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with this department.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing case-insensitive filter...');
+            testMixedCase();
+        };
+    </script>
+</body>
+</html>

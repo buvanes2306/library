@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BookID Search Complete Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .search-box { padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 BookID Search Complete Test</h1>
+    
+    <div class="test-section">
+        <h2>📚 Test BookID Search</h2>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by bookId..." style="width: 300px; padding: 8px;">
+            <button onclick="testBookIdSearch()">Search</button>
+            <button onclick="clearSearch()">Clear</button>
+        </div>
+        <div id="search-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Quick Tests</h2>
+        <button onclick="testBookId00018()">Test "00018"</button>
+        <button onclick="testBookId18()">Test "18"</button>
+        <button onclick="testBookIdPartial()">Test "0001"</button>
+        <button onclick="testBookIdNotFound()">Test "99999"</button>
+        <div id="quick-results"></div>
+    </div>
+
+    <script>
+        async function testBookIdSearch() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const resultDiv = document.getElementById('search-result');
+            
+            if (!searchTerm) {
+                resultDiv.innerHTML = '<div class="result error">❌ Please enter a search term</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=' + encodeURIComponent(searchTerm));
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<div class="result success">✅ Search for "' + searchTerm + '" found ' + data.data.books.length + ' books</div>';
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<table>';
+                        html += '<tr><th>Book ID</th><th>AccNo</th><th>Title</th><th>Author</th></tr>';
+                        
+                        data.data.books.forEach(book => {
+                            const authorDisplay = book.author || (book.authors && book.authors.length > 0 ? book.authors.join(', ') : 'N/A');
+                            html += '<tr>';
+                            html += '<td>' + (book.bookId || 'N/A') + '</td>';
+                            html += '<td>' + book.accNo + '</td>';
+                            html += '<td>' + book.title + '</td>';
+                            html += '<td>' + authorDisplay + '</td>';
+                            html += '</tr>';
+                        });
+                        
+                        html += '</table>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ Search failed</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        async function testBookId00018() {
+            await testSearchTerm('00018');
+        }
+
+        async function testBookId18() {
+            await testSearchTerm('18');
+        }
+
+        async function testBookIdPartial() {
+            await testSearchTerm('0001');
+        }
+
+        async function testBookIdNotFound() {
+            await testSearchTerm('99999');
+        }
+
+        async function testSearchTerm(term) {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=' + encodeURIComponent(term));
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('quick-results');
+                if (data.success && data.data.books.length > 0) {
+                    resultDiv.innerHTML = '<div class="result success">✅ Search for "' + term + '" found ' + data.data.books.length + ' books</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ Search for "' + term + '" found 0 books</div>';
+                }
+            } catch (error) {
+                document.getElementById('quick-results').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('search-result').innerHTML = '';
+            document.getElementById('quick-results').innerHTML = '';
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing BookID search complete...');
+            testBookId00018();
+        };
+    </script>
+</body>
+</html>

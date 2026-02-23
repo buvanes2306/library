@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Test with Real Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .search-box { padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Search Test with Real Book Data</h1>
+    
+    <div class="test-section">
+        <h2>📚 Test Book Data Structure</h2>
+        <div class="book-item">
+            <h3>Sample Book:</h3>
+            <p><strong>Title:</strong> Operation Research Concepts and Cases</p>
+            <p><strong>Authors:</strong> Hillier, Frederick S.</p>
+            <p><strong>AccNo:</strong> 5916</p>
+            <p><strong>Publisher:</strong> McGraw-Hill</p>
+            <p><strong>Department:</strong> INFORMATION TECHNOLOGY</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Test Search Functionality</h2>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by title, author, accNo..." style="width: 300px; padding: 8px;">
+            <button onclick="testSearch()">Search</button>
+            <button onclick="clearSearch()">Clear</button>
+        </div>
+        <div id="search-result"></div>
+    </div>
+
+    <script>
+        const sampleBook = {
+            "bookId": "00018",
+            "accNo": 5916,
+            "title": "Operation Research Concepts and Cases",
+            "authors": ["Hillier", "Frederick S."],
+            "publisher": "McGraw-Hill",
+            "publishedYear": 2008,
+            "department": "INFORMATION TECHNOLOGY",
+            "status": "Available",
+            "location": { "rack": 1, "shelf": 60 },
+            "callNumber": "1",
+            "edition": 8,
+            "copies": 1
+        };
+
+        function testSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const resultDiv = document.getElementById('search-result');
+            
+            if (!searchTerm) {
+                resultDiv.innerHTML = '<div class="result error">❌ Please enter a search term</div>';
+                return;
+            }
+
+            // Test search logic (same as frontend)
+            const matches = {
+                title: sampleBook.title.toLowerCase().includes(searchTerm),
+                author: sampleBook.authors.some(author => author.toLowerCase().includes(searchTerm)),
+                accNo: sampleBook.accNo.toString().includes(searchTerm),
+                publisher: sampleBook.publisher.toLowerCase().includes(searchTerm)
+            };
+
+            const found = matches.title || matches.author || matches.accNo || matches.publisher;
+
+            resultDiv.innerHTML = `
+                <div class="result ${found ? 'success' : 'error'}">
+                    <h3>Search Results for: "${searchTerm}"</h3>
+                    <p><strong>Title Match:</strong> ${matches.title ? '✅' : '❌'}</p>
+                    <p><strong>Author Match:</strong> ${matches.author ? '✅' : '❌'}</p>
+                    <p><strong>AccNo Match:</strong> ${matches.accNo ? '✅' : '❌'}</p>
+                    <p><strong>Publisher Match:</strong> ${matches.publisher ? '✅' : '❌'}</p>
+                    <p><strong>Overall Result:</strong> ${found ? '✅ Book Found' : '❌ No Match'}</p>
+                </div>
+            `;
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('search-result').innerHTML = '';
+        }
+
+        // Test API search
+        async function testAPISearch() {
+            try {
+                const response = await fetch('http://localhost:5000/api/books?search=operation');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('api-result').innerHTML = 
+                        '<div class="result success">✅ API Search working! Found ' + data.data.books.length + ' books</div>';
+                } else {
+                    document.getElementById('api-result').innerHTML = 
+                        '<div class="result error">❌ API Search failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('api-result').innerHTML = 
+                    '<div class="result error">❌ API Error: ' + error.message + '</div>';
+            }
+        }
+
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing search with real book data...');
+            testAPISearch();
+        };
+    </script>
+
+    <div class="test-section">
+        <h2>🌐 Test API Search</h2>
+        <button onclick="testAPISearch()">Test API Search</button>
+        <div id="api-result"></div>
+    </div>
+</body>
+</html>

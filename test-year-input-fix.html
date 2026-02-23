@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔧 Year Input Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        select, input { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .highlight { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Year Input Fix Test</h1>
+    
+    <div class="test-section">
+        <h3>✅ Year Input - FIXED!</h3>
+        <p><strong>Issue:</strong> Year input was triggering search on every keystroke</p>
+        <p><strong>Fix:</strong> Only searches when 4 digits entered or Enter pressed</p>
+        <p><strong>Behavior:</strong> Type "2010" → searches only after "0" (4th digit)</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Test Year Input Behavior</h2>
+        
+        <div class="filter-item">
+            <label>Published Year (Type 2010)</label>
+            <input type="number" id="publishedYear" placeholder="e.g., 2023" min="1900" max="2100" style="width: 100%; padding: 8px; font-size: 14px;">
+            <small><em>Try typing "2010" - notice it only searches after 4 digits</em></small>
+        </div>
+        
+        <button onclick="testYearInput()">Test Current Year</button>
+        <button onclick="clearInput()">Clear Input</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        
+        async function testYearInput() {
+            const publishedYear = document.getElementById('publishedYear').value;
+            
+            const params = new URLSearchParams();
+            if (publishedYear) {
+                params.append('publishedYear', publishedYear);
+            }
+            params.append('limit', '5');
+            
+            console.log('🔍 Testing year input:', publishedYear);
+            console.log('📡 API URL:', `http://localhost:5002/api/books?${params.toString()}`);
+            
+            try {
+                const response = await fetch(`http://localhost:5002/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Year Input Working!</div>`;
+                    html += `<p><strong>Year:</strong> ${publishedYear}</p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Dept: ${book.department}</span> | 
+                                    <span class="status ${book.status === 'Available' ? 'available' : 'issued'}">${book.status}</span><br>
+                                    <small>Year: ${book.publishedYear} | AccNo: ${book.accNo}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with this year filter.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearInput() {
+            document.getElementById('publishedYear').value = '';
+            document.getElementById('test-result').innerHTML = '';
+        }
+        
+        // Simulate the new behavior - only search after 4 digits
+        document.getElementById('publishedYear').addEventListener('input', function(e) {
+            const value = e.target.value;
+            console.log('🔤 Typing:', value);
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Only search if 4 digits or empty
+            if (value.length === 4 || value === '') {
+                searchTimeout = setTimeout(() => {
+                    console.log('🔍 Searching for year:', value);
+                    testYearInput();
+                }, 500);
+            }
+        });
+        
+        // Allow Enter key to trigger search
+        document.getElementById('publishedYear').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                console.log('⏎ Enter pressed, searching...');
+                testYearInput();
+            }
+        });
+    </script>
+</body>
+</html>

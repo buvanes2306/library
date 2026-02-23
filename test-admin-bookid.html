@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel BookID Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .form-field { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 300px; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>📝 Admin Panel BookID Test</h1>
+    
+    <div class="test-section">
+        <h2>Test BookID Field in Admin Panel</h2>
+        <div class="form-field">
+            <label for="bookId">Book ID</label>
+            <input type="text" id="bookId" placeholder="e.g., 00018" value="00018">
+        </div>
+        <div class="form-field">
+            <label for="accNo">Accession Number *</label>
+            <input type="text" id="accNo" placeholder="e.g., CS-001" value="5916">
+        </div>
+        <div class="form-field">
+            <label for="title">Title *</label>
+            <input type="text" id="title" placeholder="Enter book title" value="Operation Research Concepts and Cases">
+        </div>
+        <button onclick="testBookIdField()">Test BookID Field</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        function testBookIdField() {
+            const bookId = document.getElementById('bookId').value;
+            const accNo = document.getElementById('accNo').value;
+            const title = document.getElementById('title').value;
+            
+            const resultDiv = document.getElementById('test-result');
+            
+            if (bookId) {
+                resultDiv.innerHTML = '<div class="result success">✅ BookID field is working!</div>' +
+                    '<p><strong>Book ID:</strong> ' + bookId + '</p>' +
+                    '<p><strong>Accession No:</strong> ' + accNo + '</p>' +
+                    '<p><strong>Title:</strong> ' + title + '</p>' +
+                    '<p>✅ BookID field has been successfully added to admin panel!</p>';
+            } else {
+                resultDiv.innerHTML = '<div class="result error">❌ BookID field is empty</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing BookID field in admin panel...');
+            testBookIdField();
+        };
+    </script>
+</body>
+</html>

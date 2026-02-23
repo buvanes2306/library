@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Verification Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        select, input { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .summary { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Final Department Filter Verification</h1>
+    
+    <div class="summary">
+        <h3>📊 Expected Results (Based on Database)</h3>
+        <p><strong>Computer Science:</strong> Should find 78 books</p>
+        <p><strong>Information Technology:</strong> Should find 67 books</p>
+        <p><strong>Electronics:</strong> Should find 48 books</p>
+        <p><strong>General:</strong> Should find 6 books</p>
+        <p><strong>Maths:</strong> Should find 2 books</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Test All Filters</h2>
+        
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label>Department</label>
+                <select id="department" onchange="testAllFilters()">
+                    <option value="">All Departments</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                    <option value="ELECTRONICS">Electronics</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Mechanical">Mechanical</option>
+                    <option value="Civil">Civil</option>
+                    <option value="General">General</option>
+                    <option value="Maths">Maths</option>
+                    <option value="Reference">Reference</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Status</label>
+                <select id="status" onchange="testAllFilters()">
+                    <option value="">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Issued">Issued</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Book ID</label>
+                <input type="text" id="bookId" placeholder="e.g., 00001" onchange="testAllFilters()">
+            </div>
+            
+            <div class="filter-item">
+                <label>Published Year</label>
+                <input type="number" id="publishedYear" placeholder="e.g., 2000" onchange="testAllFilters()">
+            </div>
+            
+            <div class="filter-item">
+                <label>Search</label>
+                <input type="text" id="search" placeholder="Search books..." onchange="testAllFilters()">
+            </div>
+        </div>
+        
+        <button onclick="testAllFilters()">Test All Filters</button>
+        <button onclick="clearAllFilters()">Clear All Filters</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testAllFilters() {
+            const department = document.getElementById('department').value;
+            const status = document.getElementById('status').value;
+            const bookId = document.getElementById('bookId').value;
+            const publishedYear = document.getElementById('publishedYear').value;
+            const search = document.getElementById('search').value;
+            
+            const params = new URLSearchParams();
+            if (department) params.append('department', department);
+            if (status) params.append('status', status);
+            if (bookId) params.append('bookId', bookId);
+            if (publishedYear) params.append('publishedYear', publishedYear);
+            if (search) params.append('search', search);
+            params.append('limit', '10');
+            
+            console.log('🔍 Testing filters:', Object.fromEntries(params));
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Filters Working!</div>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Results:</h4>';
+                        data.data.books.slice(0, 3).forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Dept: ${book.department}</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>ID: ${book.bookId} | AccNo: ${book.accNo} | Year: ${book.publishedYear}</small>
+                                </div>
+                            `;
+                        });
+                        
+                        // Verification based on expectations
+                        const expectedCounts = {
+                            'Computer Science': 78,
+                            'INFORMATION TECHNOLOGY': 67,
+                            'ELECTRONICS': 48,
+                            'General': 6,
+                            'Maths': 2
+                        };
+                        
+                        if (department && expectedCounts[department]) {
+                            const expected = expectedCounts[department];
+                            const actual = data.data.books.length;
+                            const isCorrect = actual >= Math.min(expected, 10); // Account for limit=10
+                            
+                            html += `<div class="${isCorrect ? 'success' : 'error'}">`;
+                            html += `📊 ${department}: Expected ${expected}, Found ${actual} (showing first 10)`;
+                            html += `</div>`;
+                        }
+                    } else {
+                        html += '<p>No books found with these filters.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearAllFilters() {
+            document.getElementById('department').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('bookId').value = '';
+            document.getElementById('publishedYear').value = '';
+            document.getElementById('search').value = '';
+            testAllFilters();
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Final verification test...');
+            testAllFilters();
+        };
+    </script>
+</body>
+</html>

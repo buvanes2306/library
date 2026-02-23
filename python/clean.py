@@ -1,14 +1,20 @@
 import os
 import json
 import re
+import uuid
 
+# --------------------------------------------------
+# File Paths
+# --------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-INPUT_FILE = os.path.join(BASE_DIR, "Library_Database.json")
+INPUT_FILE = os.path.join(BASE_DIR, "Library_Database 1.json")
 OUTPUT_FILE = os.path.join(BASE_DIR, "books_cleaned.json")
 
 
-# 🔹 Department Mapping (adjust if needed)
+# --------------------------------------------------
+# Department Normalization
+# --------------------------------------------------
 def normalize_department(dept):
     if not dept:
         return "GENERAL"
@@ -17,7 +23,7 @@ def normalize_department(dept):
 
     if "COMPUTER" in dept or dept == "CSE":
         return "COMPUTER SCIENCE"
-    elif "INFORMATION" in dept or "IT" == dept:
+    elif "INFORMATION" in dept or "IT" in dept:
         return "INFORMATION TECHNOLOGY"
     elif "ELECTRONICS" in dept or "ECE" in dept:
         return "ELECTRONICS"
@@ -35,7 +41,9 @@ def normalize_department(dept):
         return "GENERAL"
 
 
-# 🔹 Extract Rack & Shelf
+# --------------------------------------------------
+# Extract Rack & Shelf
+# --------------------------------------------------
 def extract_location(location_string):
     if not location_string:
         return {"rack": None, "shelf": None}
@@ -51,41 +59,60 @@ def extract_location(location_string):
     return {"rack": rack, "shelf": shelf}
 
 
-# 🔹 Convert authors to list
+# --------------------------------------------------
+# Parse Authors
+# --------------------------------------------------
 def parse_authors(author_string):
     if not author_string:
         return []
 
-    authors = [a.strip() for a in author_string.split(",")]
+    authors = [a.strip() for a in author_string.split(",") if a.strip()]
     return authors
 
 
-# 🔹 Clean Status
+# --------------------------------------------------
+# Normalize Status
+# --------------------------------------------------
 def normalize_status(status):
     if not status:
         return "Available"
 
-    status = status.strip().capitalize()
+    status = status.strip().lower()
 
-    if status.lower() == "issued":
+    if status == "issued":
         return "Issued"
     else:
         return "Available"
 
 
-# 🔹 Main Cleaning Function
+# --------------------------------------------------
+# Clean One Record
+# --------------------------------------------------
 def clean_record(record):
     cleaned = {}
 
+    # Book ID (generate if missing)
+    cleaned["bookId"] = (
+        record.get("BOOK _Id")
+        or record.get("BOOK_Id")
+        or record.get("Book_ID")
+        or record.get("Book Id")
+        or str(uuid.uuid4())
+    )
+
     cleaned["accNo"] = record.get("Acc no")
+
     cleaned["title"] = record.get("Title", "").strip()
+
     cleaned["authors"] = parse_authors(record.get("Author"))
+
     cleaned["publisher"] = record.get("Publisher", "").strip()
 
     year = record.get("Published Year")
     cleaned["publishedYear"] = year if year and year != 0 else None
 
     cleaned["department"] = normalize_department(record.get("Department"))
+
     cleaned["status"] = normalize_status(record.get("Status"))
 
     cleaned["location"] = extract_location(record.get("Location Rack, Shelf"))
@@ -102,19 +129,36 @@ def clean_record(record):
     return cleaned
 
 
-# 🔹 Execute Cleaning
+# --------------------------------------------------
+# Main Function
+# --------------------------------------------------
 def main():
-    with open(INPUT_FILE, "r", encoding="utf-8") as file:
-        data = json.load(file)
+    try:
+        with open(INPUT_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
 
-    cleaned_data = [clean_record(record) for record in data]
+        # If JSON is a single object → convert to list
+        if isinstance(data, dict):
+            data = [data]
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
-        json.dump(cleaned_data, file, indent=2)
+        cleaned_data = [clean_record(record) for record in data]
 
-    print("✅ Cleaning completed successfully!")
-    print(f"📁 Clean file saved as: {OUTPUT_FILE}")
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
+            json.dump(cleaned_data, file, indent=2)
+
+        print("✅ Cleaning completed successfully!")
+        print(f"📁 Clean file saved as: {OUTPUT_FILE}")
+
+    except FileNotFoundError:
+        print("❌ Input file not found. Check the file name and location.")
+    except json.JSONDecodeError:
+        print("❌ Invalid JSON format. Please fix your JSON file.")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
 
 
+# --------------------------------------------------
+# Run Script
+# --------------------------------------------------
 if __name__ == "__main__":
     main()

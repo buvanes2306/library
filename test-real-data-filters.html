@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real Data Filters Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>📚 Real Data Filters Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Real Department Data</h2>
+        <button onclick="testIT()">Test Information Technology</button>
+        <button onclick="testCS()">Test Computer Science</button>
+        <button onclick="testElectronics()">Test Electronics</button>
+        <button onclick="testAll()">Test All Books</button>
+        <div id="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Status Filters</h2>
+        <button onclick="testAvailable()">Test Available</button>
+        <button onclick="testIssued()">Test Issued</button>
+        <div id="status-result"></div>
+    </div>
+
+    <script>
+        async function testIT() {
+            await testDepartment('INFORMATION TECHNOLOGY');
+        }
+
+        async function testCS() {
+            await testDepartment('COMPUTER SCIENCE');
+        }
+
+        async function testElectronics() {
+            await testDepartment('ELECTRONICS');
+        }
+
+        async function testAll() {
+            await testDepartment('');
+        }
+
+        async function testDepartment(dept) {
+            try {
+                const url = dept ? `http://localhost:5000/api/books?department=${encodeURIComponent(dept)}` : 'http://localhost:5000/api/books';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success && data.data.books.length > 0) {
+                    let html = `<div class="result success">✅ ${dept || 'All'}: ${data.data.books.length} books found</div>`;
+                    
+                    // Show first 3 books with their departments
+                    data.data.books.slice(0, 3).forEach(book => {
+                        const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                        html += `
+                            <div class="book-item">
+                                <strong>${book.title}</strong><br>
+                                <span class="dept">Department: ${book.department}</span> | 
+                                <span class="status ${statusClass}">${book.status}</span><br>
+                                <small>AccNo: ${book.accNo} | Year: ${book.publishedYear}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ No books found</div>';
+                }
+            } catch (error) {
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        async function testAvailable() {
+            await testStatus('Available');
+        }
+
+        async function testIssued() {
+            await testStatus('Issued');
+        }
+
+        async function testStatus(status) {
+            try {
+                const url = status ? `http://localhost:5000/api/books?status=${encodeURIComponent(status)}` : 'http://localhost:5000/api/books';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('status-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ ${status || 'All'}: ${data.data.books.length} books found</div>`;
+                    
+                    // Show first 3 books with their statuses
+                    data.data.books.slice(0, 3).forEach(book => {
+                        const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                        html += `
+                            <div class="book-item">
+                                <strong>${book.title}</strong><br>
+                                <span class="dept">Department: ${book.department}</span> | 
+                                <span class="status ${statusClass}">${book.status}</span><br>
+                                <small>AccNo: ${book.accNo} | Year: ${book.publishedYear}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ Status filter failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('status-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing real data filters...');
+            testIT();
+        };
+    </script>
+</body>
+</html>

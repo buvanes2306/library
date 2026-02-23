@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exact Frontend Behavior Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        select { width: 100%; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Exact Frontend Behavior Test</h1>
+    
+    <div class="test-section">
+        <h2>Frontend Filter Simulation</h2>
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label>Department</label>
+                <select id="department" onchange="testDepartmentFilter()">
+                    <option value="">All Departments</option>
+                    <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                    <option value="COMPUTER SCIENCE">Computer Science</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Mechanical">Mechanical</option>
+                    <option value="Civil">Civil</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="General">General</option>
+                    <option value="Reference">Reference</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="clearFilter()">Clear Filter</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        let currentFilter = '';
+        
+        async function testDepartmentFilter() {
+            const department = document.getElementById('department').value;
+            currentFilter = department;
+            
+            // Simulate exact frontend API call
+            const params = new URLSearchParams();
+            if (department) {
+                params.append('department', department);
+            }
+            params.append('page', '1');
+            params.append('limit', '10');
+            
+            console.log('🔍 Testing with params:', params.toString());
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Filter "${department || 'All'}": ${data.data.books.length} books found</div>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h3>Books Found:</h3>';
+                        data.data.books.forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Department: "${book.department}"</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>AccNo: ${book.accNo} | Year: ${book.publishedYear} | BookID: ${book.bookId}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with this filter.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearFilter() {
+            document.getElementById('department').value = '';
+            testDepartmentFilter();
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing exact frontend behavior...');
+            testDepartmentFilter();
+        };
+    </script>
+</body>
+</html>

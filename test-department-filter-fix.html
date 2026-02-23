@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Department Filter Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 10px 0; }
+        select { width: 200px; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .fix-highlight { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Department Filter Fix Test</h1>
+    
+    <div class="fix-highlight">
+        <h3>🛠️ Fix Applied:</h3>
+        <p><strong>Problem:</strong> Filter change didn't trigger new API call</p>
+        <p><strong>Solution:</strong> Added <code>setPagination(prev => ({ ...prev, page: 1 }))</code> to handleFilterChange</p>
+        <p><strong>Result:</strong> Filters now work immediately when changed!</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Department Filter</h2>
+        <div class="filter-item">
+            <label>Department Filter</label>
+            <select id="department" onchange="testDepartmentFilter()">
+                <option value="">All Departments</option>
+                <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                <option value="COMPUTER SCIENCE">Computer Science</option>
+                <option value="ELECTRONICS">Electronics</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+                <option value="General">General</option>
+                <option value="Reference">Reference</option>
+            </select>
+        </div>
+        
+        <button onclick="testDepartmentFilter()">Test Current Filter</button>
+        <button onclick="clearFilter()">Clear Filter</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testDepartmentFilter() {
+            const department = document.getElementById('department').value;
+            
+            // Simulate the fixed frontend behavior
+            const params = new URLSearchParams();
+            if (department) {
+                params.append('department', department);
+            }
+            params.append('page', '1'); // Reset to page 1
+            params.append('limit', '10');
+            
+            console.log('🔍 Testing department filter:', department || 'All');
+            console.log('📡 API call:', `http://localhost:5000/api/books?${params.toString()}`);
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Department Filter Working!</div>`;
+                    html += `<p><strong>Filter:</strong> "${department || 'All Departments'}"</p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books:</h4>';
+                        data.data.books.slice(0, 5).forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Department: "${book.department}"</span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>AccNo: ${book.accNo} | Year: ${book.publishedYear}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with this department filter.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearFilter() {
+            document.getElementById('department').value = '';
+            testDepartmentFilter();
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing department filter fix...');
+            testDepartmentFilter();
+        };
+    </script>
+</body>
+</html>

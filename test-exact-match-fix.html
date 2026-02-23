@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exact Match Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .filter-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 10px 0; }
+        select { width: 250px; padding: 5px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .book-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .dept { color: #0066cc; font-weight: bold; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .available { background: #d4edda; color: #155724; }
+        .issued { background: #fff3cd; color: #856404; }
+        .fix-highlight { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .db-value { background: #e7f3ff; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .dropdown-value { background: #d4edda; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Exact Match Fix Test</h1>
+    
+    <div class="fix-highlight">
+        <h3>🛠️ Case Mismatch Fixed!</h3>
+        <p><strong>Problem:</strong> Dropdown sent "Computer Science" but DB has "COMPUTER SCIENCE"</p>
+        <p><strong>Solution:</strong> Updated dropdown values to match DB exactly</p>
+        
+        <h4>📋 Value Mapping:</h4>
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
+            <tr>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Display Text</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Dropdown Value</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Database Value</th>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">Information Technology</td>
+                <td style="border: 1px solid #ddd; padding: 8px;"><span class="dropdown-value">INFORMATION TECHNOLOGY</span></td>
+                <td style="border: 1px solid #ddd; padding: 8px;"><span class="db-value">INFORMATION TECHNOLOGY</span></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">Computer Science</td>
+                <td style="border: 1px solid #ddd; padding: 8px;"><span class="dropdown-value">COMPUTER SCIENCE</span></td>
+                <td style="border: 1px solid #ddd; padding: 8px;"><span class="db-value">COMPUTER SCIENCE</span></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">Electronics</td>
+                <td style="border: 1px solid #ddd; padding: 8px;"><span class="dropdown-value">ELECTRONICS</span></td>
+                <td style="border: 1px solid #ddd; padding: 8px;"><span class="db-value">ELECTRONICS</span></td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Exact Match Filters</h2>
+        
+        <div class="filter-item">
+            <label>Department Filter (Fixed Values)</label>
+            <select id="department" onchange="testDepartmentFilter()">
+                <option value="">All Departments</option>
+                <option value="INFORMATION TECHNOLOGY">Information Technology</option>
+                <option value="COMPUTER SCIENCE">Computer Science</option>
+                <option value="ELECTRONICS">Electronics</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+                <option value="General">General</option>
+                <option value="Reference">Reference</option>
+            </select>
+        </div>
+        
+        <button onclick="testDepartmentFilter()">Test Current Filter</button>
+        <button onclick="clearFilter()">Clear Filter</button>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testDepartmentFilter() {
+            const department = document.getElementById('department').value;
+            
+            const params = new URLSearchParams();
+            if (department) {
+                params.append('department', department);
+            }
+            params.append('limit', '5');
+            
+            console.log('🔍 Testing department:', department || 'All');
+            console.log('📡 API call:', `http://localhost:5000/api/books?${params.toString()}`);
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/books?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log('📡 API Response:', data);
+                
+                const resultDiv = document.getElementById('test-result');
+                if (data.success) {
+                    let html = `<div class="result success">✅ Exact match working!</div>`;
+                    html += `<p><strong>Filter Value:</strong> <span class="dropdown-value">${department || 'All'}</span></p>`;
+                    html += `<p><strong>Books Found:</strong> ${data.data.books.length}</p>`;
+                    
+                    if (data.data.books.length > 0) {
+                        html += '<h4>Sample Books:</h4>';
+                        data.data.books.forEach((book, index) => {
+                            const statusClass = book.status === 'Available' ? 'available' : 'issued';
+                            html += `
+                                <div class="book-item">
+                                    <strong>${index + 1}. ${book.title}</strong><br>
+                                    <span class="dept">Department: <span class="db-value">${book.department}</span></span> | 
+                                    <span class="status ${statusClass}">${book.status}</span><br>
+                                    <small>AccNo: ${book.accNo} | Year: ${book.publishedYear}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No books found with this filter.</p>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ API call failed</div>';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('test-result').innerHTML = '<div class="result error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearFilter() {
+            document.getElementById('department').value = '';
+            testDepartmentFilter();
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('🧪 Testing exact match fix...');
+            testDepartmentFilter();
+        };
+    </script>
+</body>
+</html>

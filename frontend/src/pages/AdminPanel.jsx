@@ -16,6 +16,7 @@ const AdminPanel = () => {
   const isEditing = Boolean(id)
   
   const [formData, setFormData] = useState({
+    bookId: '',
     accNo: '',
     title: '',
     author: '',
@@ -52,6 +53,7 @@ const AdminPanel = () => {
           const response = await axios.get(`/api/books/${id}`)
           const book = response.data.data.book
           setFormData({
+            bookId: book.bookId || '',
             accNo: book.accNo,
             title: book.title,
             author: book.author,
@@ -177,6 +179,20 @@ const AdminPanel = () => {
             {/* Left Column */}
             <div className="space-y-6">
               <div>
+                <label htmlFor="bookId" className="block text-sm font-medium text-gray-700">
+                  Book ID
+                </label>
+                <input
+                  type="text"
+                  id="bookId"
+                  name="bookId"
+                  value={formData.bookId}
+                  onChange={handleChange}
+                  className="input-field mt-1"
+                  placeholder="e.g., 00018"
+                />
+              </div>
+              <div>
                 <label htmlFor="accNo" className="block text-sm font-medium text-gray-700">
                   Accession Number *
                 </label>
@@ -289,6 +305,7 @@ const AdminPanel = () => {
                 >
                   <option value="Available">Available</option>
                   <option value="Issued">Issued</option>
+                  <option value="Lost">Lost</option>
                 </select>
               </div>
 
