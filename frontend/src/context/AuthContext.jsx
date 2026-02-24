@@ -1,20 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import toast from 'react-hot-toast'
-
-// Set up Axios interceptor to include JWT token in all requests
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
 
 const AuthContext = createContext()
 
@@ -76,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get('/api/auth/me')
+        const response = await api.get('/auth/me', { skipAuthRedirect: true })
         dispatch({ type: 'SET_USER', payload: response.data.data.user })
       } catch (error) {
         dispatch({ type: 'LOGOUT' })
@@ -89,7 +75,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       dispatch({ type: 'LOGIN_START' })
-      const response = await axios.post('/api/auth/login', { email, password })
+      const response = await api.post('/auth/login', { email, password })
+      
+      // Store token in localStorage
+      if (response.data.data.token) {
+        localStorage.setItem('token', response.data.data.token)
+      }
+      
       dispatch({ type: 'LOGIN_SUCCESS', payload: response.data.data })
       toast.success('Login successful!')
       return response.data.data.user
@@ -104,7 +96,13 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password, role) => {
     try {
       dispatch({ type: 'REGISTER_START' })
-      const response = await axios.post('/api/auth/register', { name, email, password, role })
+      const response = await api.post('/auth/register', { name, email, password, role })
+      
+      // Store token in localStorage
+      if (response.data.data.token) {
+        localStorage.setItem('token', response.data.data.token)
+      }
+      
       dispatch({ type: 'REGISTER_SUCCESS', payload: response.data.data })
       toast.success('Registration successful!')
       return response.data.data.user
@@ -118,10 +116,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('/api/auth/logout')
+      await api.post('/auth/logout')
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
+      // Clear token from localStorage
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
       dispatch({ type: 'LOGOUT' })
       toast.success('Logged out successfully')
     }

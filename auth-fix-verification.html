@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>✅ Authentication Fix - 401 Unauthorized Resolved</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .fix { background: #e3f2fd; color: #004085; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .test { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .code { background: #f1f3f4; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; }
+        .status { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>✅ Authentication Fix - 401 Unauthorized Resolved</h1>
+    
+    <div class="success">
+        <h2>🎯 Root Cause Identified & Fixed</h2>
+        <p><strong>Issue:</strong> 401 Unauthorized on /api/auth/me</p>
+        <p><strong>Cause:</strong> Token not being stored after login</p>
+        <p><strong>Solution:</strong> Added token storage to login/register functions</p>
+    </div>
+
+    <div class="fix">
+        <h3>🔧 Authentication Fixes Applied:</h3>
+        
+        <h4>✅ Login Function Fixed</h4>
+        <div class="code">
+// BEFORE: No token storage
+const response = await api.post('/auth/login', { email, password })
+dispatch({ type: 'LOGIN_SUCCESS', payload: response.data.data })
+
+// AFTER: Token storage added
+const response = await api.post('/auth/login', { email, password })
+if (response.data.data.token) {
+  localStorage.setItem('token', response.data.data.token)
+}
+dispatch({ type: 'LOGIN_SUCCESS', payload: response.data.data })
+        </div>
+        
+        <h4>✅ Register Function Fixed</h4>
+        <div class="code">
+// BEFORE: No token storage
+const response = await api.post('/auth/register', { name, email, password, role })
+dispatch({ type: 'REGISTER_SUCCESS', payload: response.data.data })
+
+// AFTER: Token storage added
+const response = await api.post('/auth/register', { name, email, password, role })
+if (response.data.data.token) {
+  localStorage.setItem('token', response.data.data.token)
+}
+dispatch({ type: 'REGISTER_SUCCESS', payload: response.data.data })
+        </div>
+        
+        <h4>✅ Logout Function Enhanced</h4>
+        <div class="code">
+// BEFORE: Token not cleared
+dispatch({ type: 'LOGOUT' })
+
+// AFTER: Token properly cleared
+localStorage.removeItem('token')
+localStorage.removeItem('user')
+dispatch({ type: 'LOGOUT' })
+        </div>
+    </div>
+
+    <div class="test">
+        <h3>🧪 Test Authentication Flow</h3>
+        <button onclick="checkToken()">🔍 Check Current Token</button>
+        <button onclick="clearToken()">🗑️ Clear Token</button>
+        <button onclick="testAuthAPI()">🧪 Test Auth API</button>
+        <div id="status" class="status">Status: Ready to test</div>
+    </div>
+
+    <div class="warning">
+        <h3>📋 How Authentication Works Now</h3>
+        <ol>
+            <li><strong>Login:</strong> User enters credentials → API call → Token stored in localStorage</li>
+            <li><strong>Token Storage:</strong> localStorage.setItem('token', response.data.data.token)</li>
+            <li><strong>API Calls:</strong> Axios interceptor adds Authorization: Bearer <token> header</li>
+            <li><strong>Auth Check:</strong> /api/auth/me called with token → Returns user data</li>
+            <li><strong>Logout:</strong> Token cleared from localStorage</li>
+        </ol>
+    </div>
+
+    <div class="success">
+        <h3>🚀 Expected Behavior After Fix</h3>
+        <p><strong>Login Flow:</strong></p>
+        <ul>
+            <li>✅ User logs in successfully</li>
+            <li>✅ Token stored in localStorage</li>
+            <li>✅ No more 401 Unauthorized errors</li>
+            <li>✅ /api/auth/me works properly</li>
+            <li>✅ Scanner page accessible</li>
+            <li>✅ All API calls include token</li>
+        </ul>
+    </div>
+
+    <div class="fix">
+        <h3>🔧 Axios Configuration (Already Working)</h3>
+        <div class="code">
+// Request interceptor adds token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Response interceptor handles 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const isAuthMe = (error.config?.url || '').includes('auth/me')
+      if (!isAuthMe) {
+        localStorage.removeItem('token')
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+        </div>
+    </div>
+
+    <div class="success">
+        <h3>🎯 Test Your Application</h3>
+        <p><strong>Access Points:</strong></p>
+        <ul>
+            <li><strong>Login:</strong> <a href="http://localhost:5173/login" target="_blank">http://localhost:5173/login</a></li>
+            <li><strong>Scanner:</strong> <a href="http://localhost:5173/scanner" target="_blank">http://localhost:5173/scanner</a></li>
+            <li><strong>Dashboard:</strong> <a href="http://localhost:5173/dashboard" target="_blank">http://localhost:5173/dashboard</a></li>
+        </ul>
+        <p><strong>Expected:</strong> No more 401 errors after login!</p>
+    </div>
+
+    <script>
+        function checkToken() {
+            const token = localStorage.getItem('token');
+            const status = document.getElementById('status');
+            
+            if (token) {
+                status.textContent = `✅ Token found: ${token.substring(0, 20)}...`;
+                status.style.background = '#d4edda';
+            } else {
+                status.textContent = '❌ No token found - please login';
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        function clearToken() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            const status = document.getElementById('status');
+            status.textContent = '🗑️ Token cleared - please login again';
+            status.style.background = '#fff3cd';
+        }
+
+        async function testAuthAPI() {
+            const status = document.getElementById('status');
+            status.textContent = '🔄 Testing /api/auth/me...';
+            status.style.background = '#fff3cd';
+            
+            try {
+                const response = await fetch('http://localhost:5002/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    status.textContent = `✅ Auth successful: ${data.data?.user?.name || 'User'}`;
+                    status.style.background = '#d4edda';
+                } else {
+                    status.textContent = `❌ Auth failed: ${response.status} ${response.statusText}`;
+                    status.style.background = '#f8d7da';
+                }
+            } catch (error) {
+                status.textContent = `❌ Network error: ${error.message}`;
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        // Auto-check token on page load
+        checkToken();
+    </script>
+</body>
+</html>

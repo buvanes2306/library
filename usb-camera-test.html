@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📹 USB Camera Scanner Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .test { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .camera-section { text-align: center; margin: 20px 0; }
+        video { border: 2px solid #007bff; border-radius: 10px; max-width: 100%; }
+        .status { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        select { padding: 10px; margin: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>📹 USB Camera Scanner Test</h1>
+    
+    <div class="success">
+        <h2>✅ Enhanced Camera Scanner with USB Support</h2>
+        <p><strong>New Features:</strong></p>
+        <ul>
+            <li>✅ Automatic USB camera detection</li>
+            <li>✅ Camera selection dropdown</li>
+            <li>✅ External camera preference</li>
+            <li>✅ Fallback to any available camera</li>
+            <li>✅ Real-time camera switching</li>
+        </ul>
+    </div>
+
+    <div class="test">
+        <h3>🧪 Camera Detection Test</h3>
+        <div class="camera-section">
+            <select id="cameraSelect">
+                <option value="">Loading cameras...</option>
+            </select>
+            <br><br>
+            <video id="video" width="640" height="480" autoplay></video>
+            <br><br>
+            <button onclick="startCamera()">📹 Start Camera</button>
+            <button onclick="stopCamera()">⏹️ Stop Camera</button>
+            <button onclick="refreshCameras()">🔄 Refresh Cameras</button>
+            <div id="status" class="status">Camera Status: Not started</div>
+        </div>
+    </div>
+
+    <div class="warning">
+        <h3>📋 USB Camera Instructions</h3>
+        <ol>
+            <li><strong>Connect USB Camera:</strong> Plug in your USB camera before starting</li>
+            <li><strong>Refresh List:</strong> Click "Refresh Cameras" to detect new devices</li>
+            <li><strong>Select Camera:</strong> Choose your USB camera from the dropdown</li>
+            <li><strong>Start Scanning:</strong> Click "Start Camera" to begin</li>
+            <li><strong>Test in App:</strong> Navigate to <code>http://localhost:5173/scanner</code> for full functionality</li>
+        </ol>
+    </div>
+
+    <div class="test">
+        <h3>🔧 Troubleshooting</h3>
+        <p><strong>If USB camera doesn't appear:</strong></p>
+        <ul>
+            <li>Check camera is properly connected via USB</li>
+            <li>Try different USB port</li>
+            <li>Install camera drivers if required</li>
+            <li>Check Device Manager for camera status</li>
+            <li>Try refreshing camera list multiple times</li>
+        </ul>
+    </div>
+
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const status = document.getElementById('status');
+
+        // Detect and list cameras
+        async function refreshCameras() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                cameraSelect.innerHTML = '<option value="">Select a camera...</option>';
+                
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    
+                    let label = device.label || `Camera ${index + 1}`;
+                    if (device.label) {
+                        if (device.label.toLowerCase().includes('usb')) {
+                            label += ' 📹 USB';
+                        } else if (device.label.toLowerCase().includes('external')) {
+                            label += ' 📹 External';
+                        } else if (device.label.toLowerCase().includes('hd')) {
+                            label += ' 📹 HD';
+                        }
+                    }
+                    
+                    option.textContent = label;
+                    cameraSelect.appendChild(option);
+                });
+                
+                status.textContent = `Camera Status: ✅ Found ${videoDevices.length} camera(s)`;
+                status.style.background = '#d4edda';
+                
+                console.log('Available cameras:', videoDevices);
+                
+            } catch (error) {
+                status.textContent = `Camera Status: ❌ Error - ${error.message}`;
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        async function startCamera() {
+            const selectedDeviceId = cameraSelect.value;
+            
+            if (!selectedDeviceId) {
+                status.textContent = 'Camera Status: ❌ Please select a camera';
+                status.style.background = '#f8d7da';
+                return;
+            }
+
+            try {
+                status.textContent = 'Camera Status: 🔄 Starting...';
+                status.style.background = '#fff3cd';
+                
+                const constraints = {
+                    video: {
+                        deviceId: selectedDeviceId,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                await video.play();
+                
+                status.textContent = 'Camera Status: ✅ Connected and streaming';
+                status.style.background = '#d4edda';
+                
+            } catch (error) {
+                status.textContent = `Camera Status: ❌ Error - ${error.message}`;
+                status.style.background = '#f8d7da';
+                console.error('Camera error:', error);
+            }
+        }
+
+        function stopCamera() {
+            try {
+                if (stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                    stream = null;
+                }
+                
+                status.textContent = 'Camera Status: ✅ Stopped';
+                status.style.background = '#fff3cd';
+                
+            } catch (error) {
+                status.textContent = `Camera Status: ❌ Error stopping - ${error.message}`;
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        // Initialize camera list on page load
+        refreshCameras();
+
+        // Handle camera selection change
+        cameraSelect.addEventListener('change', () => {
+            if (stream) {
+                stopCamera();
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>

@@ -24,10 +24,6 @@ export const getBooks = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const { search, department, status, sortBy = 'createdAt', sortOrder = 'desc', publishedYear } = req.query;
-
-  // Log database connection
-  console.log(' Database:', mongoose.connection.name);
-  console.log(' Connection state:', mongoose.connection.readyState);
   
   let query = {};
 
@@ -37,10 +33,6 @@ export const getBooks = asyncHandler(async (req, res) => {
       // Convert search to number for numeric fields (accNo)
       const searchAsNumber = Number(trimmedSearch);
       const isNumericSearch = !isNaN(searchAsNumber) && trimmedSearch !== '';
-      
-      console.log('🔍 Search term:', trimmedSearch);
-      console.log('🔍 Is numeric search:', isNumericSearch);
-      console.log('🔍 searchAsNumber:', searchAsNumber);
       
       // Build OR conditions
       const orConditions = [];
@@ -65,7 +57,6 @@ export const getBooks = asyncHandler(async (req, res) => {
       }
       
       query.$or = orConditions;
-      console.log('🔍 Search query:', JSON.stringify(query, null, 2));
     }
   }
 
@@ -92,9 +83,6 @@ export const getBooks = asyncHandler(async (req, res) => {
 
   const total = await Book.countDocuments(query);
   
-  console.log('📚 Total books found:', total);
-  console.log('📚 Books in this page:', books.length);
-
   res.json({
     success: true,
     data: {
@@ -252,4 +240,79 @@ export const updateBookStatus = asyncHandler(async (req, res) => {
     message: `Book status updated to ${status}`,
     data: { book: updatedBook }
   });
+});
+
+export const batchLookupBooks = asyncHandler(async (req, res) => {
+  const { codes } = req.body;
+  console.log('🔍 Batch lookup for codes:', codes);
+
+  try {
+    // Find books by accNo or bookId from the provided codes
+    const books = await Book.find({
+      $or: [
+        { accNo: { $in: codes } },
+        { bookId: { $in: codes } }
+      ]
+    }).populate('addedBy', 'name email');
+
+    // Create a map of found books by their identifiers
+    const foundBooks = new Map();
+    books.forEach(book => {
+      foundBooks.set(book.accNo, book);
+      if (book.bookId) {
+        foundBooks.set(book.bookId, book);
+      }
+    });
+
+    // Process results
+    const results = codes.map(code => {
+      const book = foundBooks.get(code);
+      if (book) {
+        return {
+          code,
+          found: true,
+          book: {
+            _id: book._id,
+            title: book.title,
+            author: book.author,
+            accNo: book.accNo,
+            bookId: book.bookId,
+            department: book.department,
+            status: book.status,
+            publishedYear: book.publishedYear,
+            locationRack: book.locationRack,
+            shelf: book.shelf
+          }
+        };
+      } else {
+        return {
+          code,
+          found: false,
+          message: 'Book not found in library'
+        };
+      }
+    });
+
+    const foundCount = results.filter(r => r.found).length;
+    const missingCount = results.filter(r => !r.found).length;
+
+    res.json({
+      success: true,
+      message: `Processed ${codes.length} codes. Found ${foundCount} books, ${missingCount} missing.`,
+      data: {
+        total: codes.length,
+        found: foundCount,
+        missing: missingCount,
+        results
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Batch lookup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to lookup books',
+      error: error.message
+    });
+  }
 });

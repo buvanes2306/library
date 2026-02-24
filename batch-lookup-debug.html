@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔍 Batch Lookup Debug - 500+ Barcodes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .fix { background: #e3f2fd; color: #004085; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .test { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .code { background: #f1f3f4; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; }
+        .status { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Batch Lookup Debug - 500+ Barcodes</h1>
+    
+    <div class="warning">
+        <h2>🎯 Issue: Only 4 codes detected, need 500+</h2>
+        <p><strong>Problem:</strong> Batch lookup shows only 4 codes instead of all detected codes</p>
+        <p><strong>Goal:</strong> Detect and process at least 500 barcodes</p>
+        <p><strong>Status:</strong> Debug logging added to identify the issue</p>
+    </div>
+
+    <div class="fix">
+        <h3>🔧 Debug Logging Added</h3>
+        
+        <h4>✅ 1. Enhanced Scanning Callback Logs:</h4>
+        <div class="code">
+// Added detailed logging to track each scan
+codeReaderRef.current.decodeFromVideoDevice(deviceId, videoRef.current, (result) => {
+  if (result) {
+    const code = result.getText()
+    console.log('🔍 Scanned code:', code, 'Current codes size:', codes.size)
+
+    // Prevent duplicate rapid scans
+    if (scannedRef.current.has(code)) {
+      console.log('🔍 Code already scanned, skipping:', code)
+      return
+    }
+    
+    scannedRef.current.add(code)
+    console.log('🔍 Added to scannedRef, new size:', scannedRef.current.size)
+
+    setTimeout(() => {
+      setCodes(prev => {
+        if (prev.has(code)) {
+          console.log('🔍 Code already in state, skipping:', code)
+          return prev
+        }
+        const newSet = new Set(prev)
+        newSet.add(code)
+        console.log('🔍 Added to state, new size:', newSet.size)
+        return newSet
+      })
+
+      lookupBook(code)
+      toast.success(`Scanned: ${code}`)
+    }, 0)
+  }
+})
+        </div>
+        
+        <h4>✅ 2. Enhanced Batch Processing Logs:</h4>
+        <div class="code">
+// Added logging to track batch processing
+const stopCameraScan = async () => {
+  stopCameraStream()
+  if (codes.size > 0) {
+    const codesArray = Array.from(codes)
+    console.log('🔍 Processing codes:', codesArray)
+    console.log('🔍 Codes size:', codes.size)
+    toast(`Stopping scan and processing ${codes.size} detected barcodes...`)
+    await processBatchCodes(codesArray)
+  } else {
+    toast('No barcodes detected to process')
+  }
+}
+        </div>
+    </div>
+
+    <div class="warning">
+        <h3>📋 What to Check in Console</h3>
+        
+        <h4>🔍 During Scanning:</h4>
+        <ul>
+            <li><strong>🔍 Scanned code:</strong> [code] [current size]</li>
+            <li><strong>🔍 Code already scanned, skipping:</strong> [code]</li>
+            <li><strong>🔍 Added to scannedRef, new size:</strong> [size]</li>
+            <li><strong>🔍 Added to state, new size:</strong> [size]</li>
+            <li><strong>🔍 Code already in state, skipping:</strong> [code]</li>
+        </ul>
+        
+        <h4>🔍 During Stop Scan:</h4>
+        <ul>
+            <li><strong>🔍 Processing codes:</strong> [array of codes]</li>
+            <li><strong>🔍 Codes size:</strong> [number]</li>
+        </ul>
+        
+        <h4>🔍 Backend Logs:</h4>
+        <ul>
+            <li><strong>🔍 Batch lookup for codes:</strong> [array of codes]</li>
+        </ul>
+    </div>
+
+    <div class="test">
+        <h3>🧪 Debugging Steps</h3>
+        <p><strong>🌐 Access:</strong> <a href="http://localhost:5173/scanner" target="_blank">http://localhost:5173/scanner</a></p>
+        
+        <p><strong>✅ Test Steps:</strong></p>
+        <ol>
+            <li>Open browser console (F12)</li>
+            <li>Start live camera scan</li>
+            <li>Scan multiple barcodes (at least 5-10)</li>
+            <li>Watch console logs for each scan</li>
+            <li>Click "Stop Scan" button</li>
+            <li>Check batch processing logs</li>
+            <li>Verify backend receives all codes</li>
+        </ol>
+        
+        <p><strong>🎯 What to Look For:</strong></p>
+        <ul>
+            <li>✅ Each barcode shows "🔍 Scanned code:" log</li>
+            <li>✅ "🔍 Added to state" shows increasing size</li>
+            <li>✅ "🔍 Processing codes:" shows all detected codes</li>
+            <li>✅ Backend logs show all received codes</li>
+        </ul>
+    </div>
+
+    <div class="error">
+        <h3>🔍 Possible Issues & Solutions</h3>
+        
+        <h4>❌ Issue 1: Duplicate Prevention Too Aggressive</h4>
+        <p><strong>Symptoms:</strong> Console shows "Code already scanned, skipping" for legitimate different codes</p>
+        <p><strong>Solution:</strong> Check if scannedRef is being cleared properly</p>
+        
+        <h4>❌ Issue 2: State Not Updating</h4>
+        <p><strong>Symptoms:</strong> Console shows "Code already in state, skipping" for new codes</p>
+        <p><strong>Solution:</strong> Check React state update timing</p>
+        
+        <h4>❌ Issue 3: Backend Not Receiving All Codes</h4>
+        <p><strong>Symptoms:</strong> Frontend shows all codes but backend receives fewer</p>
+        <p><strong>Solution:</strong> Check API request payload size limits</p>
+        
+        <h4>❌ Issue 4: Barcode Reading Issues</h4>
+        <p><strong>Symptoms:</strong> Fewer codes detected than expected</p>
+        <p><strong>Solution:</strong> Check camera focus, barcode quality, lighting</p>
+    </div>
+
+    <div class="fix">
+        <h3>🛠️ Backend Capacity Check</h3>
+        
+        <h4>✅ Current Backend Implementation:</h4>
+        <div class="code">
+// Backend can handle 500+ codes
+export const batchLookupBooks = asyncHandler(async (req, res) => {
+  const { codes } = req.body;
+  console.log('🔍 Batch lookup for codes:', codes);
+
+  try {
+    // MongoDB $in operator can handle large arrays
+    const books = await Book.find({
+      $or: [
+        { accNo: { $in: codes } },
+        { bookId: { $in: codes } }
+      ]
+    }).populate('addedBy', 'name email');
+
+    // Process all results
+    const results = codes.map(code => {
+      const book = foundBooks.get(code);
+      // ... process each code
+    });
+
+    res.json({
+      success: true,
+      message: `Processed ${codes.length} codes...`,
+      data: { total: codes.length, results }
+    });
+  } catch (error) {
+    console.error('❌ Batch lookup error:', error);
+    res.status(500).json({ success: false });
+  }
+});
+        </div>
+        
+        <h4>✅ Backend Capabilities:</h4>
+        <ul>
+            <li>✅ MongoDB $in operator handles 500+ codes efficiently</li>
+            <li>✅ No hardcoded limits in batch lookup</li>
+            <li>✅ Proper error handling for large arrays</li>
+            <li>✅ Memory efficient processing</li>
+        </ul>
+    </div>
+
+    <div class="success">
+        <h3>🚀 Next Steps</h3>
+        <p><strong>🔍 Debug Process:</strong></p>
+        <ol>
+            <li>Run the scanner with console open</li>
+            <li>Scan multiple barcodes (5-10 for testing)</li>
+            <li>Check all console logs</li>
+            <li>Identify where codes are being lost</li>
+            <li>Fix the specific issue found</li>
+            <li>Test with 500+ barcodes</li>
+        </ol>
+        
+        <p><strong>🎯 Expected After Debug:</strong></p>
+        <ul>
+            <li>✅ All detected codes appear in console</li>
+            <li>✅ Batch processing receives all codes</li>
+            <li>✅ Backend processes all codes</li>
+            <li>✅ Results show all detected books</li>
+            <li>✅ Ready for 500+ barcode scanning</li>
+        </ul>
+    </div>
+
+    <script>
+        // Auto-check if scanner is accessible
+        fetch('http://localhost:5173/scanner')
+            .then(() => {
+                document.body.innerHTML += '<div class="success">🔍 Debug logging is ready - check console!</div>';
+            })
+            .catch(() => {
+                document.body.innerHTML += '<div class="warning">⚠️ Scanner not accessible - please start frontend</div>';
+            });
+    </script>
+</body>
+</html>

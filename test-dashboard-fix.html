@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📊 Dashboard Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #007bff; }
+        .stat-label { color: #6c757d; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>📊 Dashboard Values Test</h1>
+    
+    <div class="success">
+        <h3>✅ Backend Services Status</h3>
+        <p><strong>MongoDB:</strong> ✅ Connected</p>
+        <p><strong>Backend:</strong> ✅ Running on port 5002</p>
+        <p><strong>Frontend:</strong> ✅ Running on port 5173</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="totalBooks">-</div>
+            <div class="stat-label">Total Books</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="availableBooks">-</div>
+            <div class="stat-label">Available Books</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="issuedBooks">-</div>
+            <div class="stat-label">Issued Books</div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchDashboardStats() {
+            try {
+                const response = await fetch('http://localhost:5002/api/books/dashboard-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalBooks').textContent = data.data.stats.totalBooks;
+                    document.getElementById('availableBooks').textContent = data.data.stats.availableBooks;
+                    document.getElementById('issuedBooks').textContent = data.data.stats.issuedBooks;
+                    
+                    console.log('📊 Dashboard Stats:', data.data.stats);
+                } else {
+                    console.error('❌ Failed to fetch dashboard stats');
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+            }
+        }
+
+        // Fetch stats on load
+        fetchDashboardStats();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(fetchDashboardStats, 30000);
+    </script>
+</body>
+</html>

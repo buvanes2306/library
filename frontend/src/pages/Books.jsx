@@ -6,12 +6,13 @@ import {
   ChevronLeft, 
   ChevronRight,
   BookOpen,
+  Plus,
   Edit,
   Trash2,
   Eye
 } from 'lucide-react'
+import api from '../api/axios'
 import LoadingSpinner from '../components/LoadingSpinner'
-import axios from 'axios'
 
 
 
@@ -42,7 +43,7 @@ const Books = () => {
       })
 
       console.log('📡 Books: API call to:', `http://localhost:5002/api/books?${params}`)
-      const response = await axios.get(`http://localhost:5002/api/books?${params}`)
+      const response = await api.get(`/books?${params}`)
       console.log('📚 Books: API response:', response.data)
       
       // Normalize IDs - convert _id to id
@@ -71,7 +72,7 @@ const Books = () => {
 
   useEffect(() => {
     fetchBooks()
-  }, [pagination.page, searchTerm, sortConfig, filters])
+  }, [pagination.page, searchTerm, sortConfig.key, sortConfig.direction, filters.department, filters.status, filters.publishedYear])
 
   
   
@@ -88,20 +89,20 @@ const Books = () => {
   }
 
   const handleYearChange = (e) => {
-    const value = e.target.value
-    setYearInputValue(value)
-    
-    // Only update filter when user has entered a complete year (4 digits) or cleared it
-    if (value.length === 4 || value === '') {
-      setFilters(prev => ({ ...prev, publishedYear: value }))
+    const raw = e.target.value
+    // Allow only digits, max 4 characters (no 'e', '+', '-', or decimals)
+    const digitsOnly = raw.replace(/\D/g, '').slice(0, 4)
+    setYearInputValue(digitsOnly)
+
+    if (digitsOnly.length === 4 || digitsOnly === '') {
+      setFilters(prev => ({ ...prev, publishedYear: digitsOnly }))
       setPagination(prev => ({ ...prev, page: 1 }))
     }
   }
 
   const handleYearKeyPress = (e) => {
-    // Allow search when Enter is pressed
     if (e.key === 'Enter') {
-      const value = e.target.value
+      const value = yearInputValue.replace(/\D/g, '').slice(0, 4)
       setFilters(prev => ({ ...prev, publishedYear: value }))
       setPagination(prev => ({ ...prev, page: 1 }))
     }
@@ -130,7 +131,7 @@ const Books = () => {
     if (!confirm('Are you sure you want to delete this book?')) return
 
     try {
-      await axios.delete(`/api/books/${bookId}`)
+      await api.delete(`/books/${bookId}`)
       fetchBooks()
     } catch (error) {
       console.error('Error deleting book:', error)
@@ -221,16 +222,17 @@ const Books = () => {
               Published Year
             </label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               id="publishedYear"
               name="publishedYear"
               placeholder="e.g., 2023"
               value={yearInputValue}
               onChange={handleYearChange}
-              onKeyPress={handleYearKeyPress}
+              onKeyDown={handleYearKeyPress}
               className="input-field"
-              min="1900"
-              max="2100"
+              maxLength={4}
+              aria-label="Published year (4 digits)"
             />
           </div>
 

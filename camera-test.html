@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📹 Camera Scanner Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .test { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .camera-section { text-align: center; margin: 20px 0; }
+        video { border: 2px solid #007bff; border-radius: 10px; max-width: 100%; }
+        .status { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📹 Camera Scanner Test</h1>
+        
+        <div class="success">
+            <h2>✅ Enhanced Camera Scanner</h2>
+            <p><strong>Fixed Issues:</strong></p>
+            <ul>
+                <li>✅ Proper camera permission handling</li>
+                <li>✅ Webcam connection to laptop camera</li>
+                <li>✅ Stop scan functionality</li>
+                <li>✅ Memory leak prevention</li>
+                <li>✅ Duplicate barcode prevention</li>
+            </ul>
+        </div>
+
+        <div class="test">
+            <h3>🧪 Camera Test</h3>
+            <div class="camera-section">
+                <video id="video" width="640" height="480" autoplay></video>
+                <div>
+                    <button onclick="startCamera()">📹 Start Camera</button>
+                    <button onclick="stopCamera()">⏹️ Stop Camera</button>
+                    <button onclick="testPermissions()">🔍 Test Permissions</button>
+                </div>
+                <div id="status" class="status">Camera Status: Not started</div>
+            </div>
+        </div>
+
+        <div class="warning">
+            <h3>📋 Instructions</h3>
+            <ol>
+                <li><strong>Start Camera:</strong> Click "Start Camera" to connect to your laptop webcam</li>
+                <li><strong>Permissions:</strong> Allow camera access when prompted by browser</li>
+                <li><strong>Stop Camera:</strong> Click "Stop Camera" to properly disconnect</li>
+                <li><strong>Test in App:</strong> Navigate to <code>http://localhost:5173/scanner</code> for full functionality</li>
+            </ol>
+        </div>
+
+        <div class="test">
+            <h3>🔧 Troubleshooting</h3>
+            <p><strong>If camera doesn't work:</strong></p>
+            <ul>
+                <li>Check browser permissions (click lock icon in address bar)</li>
+                <li>Try different browser (Chrome/Edge recommended)</li>
+                <li>Ensure no other app is using the camera</li>
+                <li>Check if laptop has a built-in webcam</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+
+        async function startCamera() {
+            try {
+                status.textContent = 'Camera Status: Requesting permission...';
+                
+                // Request camera with specific constraints
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                status.textContent = 'Camera Status: ✅ Connected and streaming';
+                status.style.background = '#d4edda';
+                
+            } catch (error) {
+                console.error('Camera error:', error);
+                status.textContent = `Camera Status: ❌ Error - ${error.message}`;
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        function stopCamera() {
+            try {
+                if (stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                    stream = null;
+                    status.textContent = 'Camera Status: ✅ Stopped';
+                    status.style.background = '#fff3cd';
+                }
+            } catch (error) {
+                console.error('Stop camera error:', error);
+                status.textContent = `Camera Status: ❌ Error stopping - ${error.message}`;
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        async function testPermissions() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                if (videoDevices.length > 0) {
+                    status.textContent = `Camera Status: ✅ Found ${videoDevices.length} camera(s)`;
+                    status.style.background = '#d4edda';
+                    console.log('Available cameras:', videoDevices);
+                } else {
+                    status.textContent = 'Camera Status: ❌ No cameras found';
+                    status.style.background = '#f8d7da';
+                }
+            } catch (error) {
+                status.textContent = `Camera Status: ❌ Permission check failed - ${error.message}`;
+                status.style.background = '#f8d7da';
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>

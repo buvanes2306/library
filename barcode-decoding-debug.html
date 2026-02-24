@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔍 Barcode Decoding Debug - Raw Scan Analysis</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .fix { background: #e3f2fd; color: #004085; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .test { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .code { background: #f1f3f4; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; }
+        .status { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Barcode Decoding Debug - Raw Scan Analysis</h1>
+    
+    <div class="warning">
+        <h2>🎯 Real Issue: Some Barcodes Not Decoding</h2>
+        <p><strong>Problem:</strong> 00001, 00003, 00005, 00007 scan but 00010 doesn't</p>
+        <p><strong>Cause:</strong> Barcode decoding issue, not React state issue</p>
+        <p><strong>Status:</strong> Raw scan logging added for diagnosis</p>
+    </div>
+
+    <div class="fix">
+        <h3>🔧 Debug Logging Added</h3>
+        
+        <h4>✅ Raw Scan Logging:</h4>
+        <div class="code">
+// Added to track every scan attempt
+codeReaderRef.current.decodeFromVideoDevice(deviceId, videoRef.current, (result, error) => {
+  if (result) {
+    const code = result.getText()
+    console.log("RAW SCAN:", code)  // NEW - shows every successful decode
+    console.log('🔍 Scanned code:', code, 'Current codes size:', codes.size)
+    // ... rest of logic
+  } else if (error) {
+    console.log("SCAN ERROR:", error)  // NEW - shows decoding errors
+  }
+})
+        </div>
+        
+        <h4>✅ What This Reveals:</h4>
+        <ul>
+            <li><strong>RAW SCAN:</strong> Every successful barcode decode</li>
+            <li><strong>SCAN ERROR:</strong> Decoding failures</li>
+            <li><strong>Format Issues:</strong> Leading zeros being trimmed</li>
+            <li><strong>Quality Issues:</strong> Poor barcode quality</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        <h3>📋 Diagnostic Steps</h3>
+        
+        <h4>🔍 Step 1: Test 00010 Barcode</h4>
+        <p>Open console and show 00010 barcode to camera. Check:</p>
+        <ul>
+            <li>✅ <strong>RAW SCAN: 00010</strong> → Decoding works, issue elsewhere</li>
+            <li>✅ <strong>RAW SCAN: 10</strong> → Leading zeros trimmed</li>
+            <li>❌ <strong>No RAW SCAN output</strong> → Decoding failed</li>
+            <li>❌ <strong>SCAN ERROR: [error]</strong> → Decoding error</li>
+        </ul>
+        
+        <h4>🔍 Step 2: Compare Working vs Non-Working</h4>
+        <p>Scan both types and compare:</p>
+        <ul>
+            <li>Working: 00001 → RAW SCAN: 00001</li>
+            <li>Not working: 00010 → ???</li>
+        </ul>
+        
+        <h4>🔍 Step 3: Test with Official Demo</h4>
+        <p>Test 00010 with official ZXing demo:</p>
+        <ul>
+            <li><a href="https://zxing-js.github.io/library/examples/multi-camera/" target="_blank">https://zxing-js.github.io/library/examples/multi-camera/</a></li>
+            <li>If fails there → barcode quality issue</li>
+            <li>If works there → configuration issue</li>
+        </ul>
+    </div>
+
+    <div class="error">
+        <h3>🔍 Common Barcode Decoding Issues</h3>
+        
+        <h4>❌ Issue 1: Barcode Format Problems</h4>
+        <div class="code">
+// Some barcode formats have strict requirements
+EAN-8: Must be exactly 8 digits
+EAN-13: Must be exactly 13 digits
+UPC-A: Must be exactly 12 digits
+CODE-128: Variable length, supports leading zeros
+CODE-39: Variable length, supports leading zeros
+        </div>
+        
+        <h4>❌ Issue 2: Leading Zero Trimming</h4>
+        <div class="code">
+// 00010 might decode as:
+RAW SCAN: 10  // Leading zeros trimmed
+// Solution: Pad with zeros if needed
+const paddedCode = code.padStart(5, '0')  // "10" → "00010"
+        </div>
+        
+        <h4>❌ Issue 3: Barcode Quality Issues</h4>
+        <ul>
+            <li><strong>Poor Print Quality:</strong> Blurry bars, low contrast</li>
+            <li><strong>Small Size:</strong> Camera can't resolve fine details</li>
+            <li><strong>Lighting:</strong> Glare, shadows, uneven lighting</li>
+            <li><strong>Angle:</strong> Too steep angle, perspective distortion</li>
+            <li><strong>Damage:</strong> Smudges, tears, scratches</li>
+        </ul>
+        
+        <h4>❌ Issue 4: Camera Limitations</h4>
+        <ul>
+            <li><strong>Focus:</strong> Cheap USB cameras can't focus properly</li>
+            <li><strong>Resolution:</strong> Too low to read small barcodes</li>
+            <li><strong>Frame Rate:</strong> Too slow for real-time scanning</li>
+            <li><strong>Auto-focus:</strong> Struggles with close-up barcodes</li>
+        </ul>
+    </div>
+
+    <div class="fix">
+        <h3>🛠️ Potential Solutions</h3>
+        
+        <h4>✅ Solution 1: Format Detection & Padding</h4>
+        <div class="code">
+// Auto-detect and pad leading zeros
+const processScannedCode = (rawCode) => {
+  // If code is shorter than expected, pad with leading zeros
+  if (rawCode.length < 5 && /^\d+$/.test(rawCode)) {
+    return rawCode.padStart(5, '0')
+  }
+  return rawCode
+}
+
+// In scan callback:
+const code = processScannedCode(result.getText())
+        </div>
+        
+        <h4>✅ Solution 2: Enhanced Camera Settings</h4>
+        <div class="code">
+// Better camera configuration for barcode scanning
+const stream = await navigator.mediaDevices.getUserMedia({
+  video: {
+    deviceId: targetDevice.deviceId ? { exact: targetDevice.deviceId } : undefined,
+    facingMode: 'environment',
+    width: { ideal: 1920 },  // Higher resolution
+    height: { ideal: 1080 },  // Higher resolution
+    focusMode: 'continuous',  // Continuous focus
+    exposureMode: 'continuous'  // Better exposure
+  }
+})
+        </div>
+        
+        <h4>✅ Solution 3: Multiple Format Support</h4>
+        <div class="code">
+// Ensure all barcode formats are supported
+import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser'
+
+// Configure for all formats
+const hints = new Map()
+hints.set(BarcodeFormat.CODE_128, true)
+hints.set(BarcodeFormat.CODE_39, true)
+hints.set(BarcodeFormat.EAN_13, true)
+hints.set(BarcodeFormat.EAN_8, true)
+hints.set(BarcodeFormat.UPC_A, true)
+hints.set(BarcodeFormat.UPC_E, true)
+hints.set(BarcodeFormat.QR_CODE, true)
+
+codeReaderRef.current = new BrowserMultiFormatReader({ hints })
+        </div>
+    </div>
+
+    <div class="test">
+        <h3>🧪 Testing Protocol</h3>
+        
+        <h4>🔍 Step-by-Step Debug:</h4>
+        <ol>
+            <li><strong>Open Console:</strong> F12 → Console tab</li>
+            <li><strong>Start Scanner:</strong> Click "Start Scan"</li>
+            <li><strong>Test Working Barcode:</strong> Show 00001</li>
+            <li><strong>Verify Output:</strong> Should see "RAW SCAN: 00001"</li>
+            <li><strong>Test Problem Barcode:</strong> Show 00010</li>
+            <li><strong>Check Output:</strong>
+                <ul>
+                    <li>If "RAW SCAN: 00010" → Issue is in duplicate logic</li>
+                    <li>If "RAW SCAN: 10" → Leading zeros trimmed</li>
+                    <li>If no output → Decoding failed</li>
+                    <li>If "SCAN ERROR" → Decoding error</li>
+                </ul>
+            </li>
+            <li><strong>Test Official Demo:</strong> Compare with ZXing demo</li>
+        </ol>
+        
+        <h4>🎯 Expected Results:</h4>
+        <ul>
+            <li>✅ Working barcodes show "RAW SCAN: [code]"</li>
+            <li>✅ All barcodes should decode with BrowserMultiFormatReader</li>
+            <li>✅ If decoding fails, check barcode quality</li>
+            <li>✅ If leading zeros trimmed, add padding logic</li>
+        </ul>
+    </div>
+
+    <div class="success">
+        <h3>🚀 Next Steps</h3>
+        <p><strong>🔍 Immediate Action:</strong></p>
+        <ol>
+            <li>Test 00010 barcode with console open</li>
+            <li>Check for "RAW SCAN:" output</li>
+            <li>Identify the specific issue</li>
+            <li>Apply the appropriate solution</li>
+        </ol>
+        
+        <p><strong>🎯 Long-term Solution:</strong></p>
+        <ul>
+            <li>✅ Implement format detection and padding</li>
+            <li>✅ Optimize camera settings for barcode scanning</li>
+            <li>✅ Add error handling for decoding failures</li>
+            <li>✅ Test with various barcode formats</li>
+            <li>✅ Ready for 500+ barcode scanning</li>
+        </ul>
+        
+        <p><strong>🌐 Ready for library robot system!</strong></p>
+    </div>
+
+    <script>
+        // Auto-check if scanner is accessible
+        fetch('http://localhost:5173/scanner')
+            .then(() => {
+                document.body.innerHTML += '<div class="success">🔍 Raw scan logging is ready - test 00010 now!</div>';
+            })
+            .catch(() => {
+                document.body.innerHTML += '<div class="warning">⚠️ Scanner not accessible - please start frontend</div>';
+            });
+    </script>
+</body>
+</html>

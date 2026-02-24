@@ -11,7 +11,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
-import axios from 'axios'
+import api from '../api/axios'
 
 const departments = [
   'All',
@@ -34,7 +34,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [autoRefreshing, setAutoRefreshing] = useState(false)
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
   const intervalRef = useRef(null)
   const REFRESH_INTERVAL = 60000 // 60 seconds (increased from 30)
@@ -48,9 +48,9 @@ const Dashboard = () => {
       }
       
       const [booksResponse, usersResponse, allBooksResponse] = await Promise.all([
-        axios.get('/api/books?limit=5'),
-        axios.get('/api/users/public-stats'),
-        axios.get('/api/books?limit=1000')
+        api.get('/books?limit=5'),
+        api.get('/users/public-stats'),
+        api.get('/books?limit=1000')
       ])
       
       const booksData = booksResponse.data.data
@@ -111,7 +111,7 @@ const Dashboard = () => {
         clearInterval(intervalRef.current)
       }
     }
-  }, [fetchDashboardData, autoRefreshEnabled])
+  }, [autoRefreshEnabled])
 
   const statCards = [
     {
@@ -276,7 +276,9 @@ const Dashboard = () => {
                       </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm">{book.author}</div>
+                      <div className="text-sm">
+                        {book.author || (Array.isArray(book.authors) ? book.authors.join(', ') : 'N/A')}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">{book.department}</div>

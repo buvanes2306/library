@@ -7,7 +7,8 @@ import {
   deleteBook,
   getBookStats,
   getDashboardStats,
-  updateBookStatus
+  updateBookStatus,
+  batchLookupBooks
 } from '../controllers/bookController.js';
 import { authenticate, authorize, optionalAuth } from '../middleware/auth.js';
 import { validateBook } from '../middleware/validation.js';
@@ -23,5 +24,6 @@ router.post('/', authenticate, authorize('admin'), validateBook, createBook);
 router.put('/:id', authenticate, authorize('admin'), validateBook, updateBook);
 router.patch('/:id/status', authenticate, authorize('admin'), updateBookStatus);
 router.delete('/:id', authenticate, authorize('admin'), deleteBook);
+router.post('/batch-lookup', optionalAuth, batchLookupBooks);
 
 export default router;

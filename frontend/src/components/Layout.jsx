@@ -9,7 +9,8 @@ import {
   Menu, 
   X,
   Home,
-  Library
+  Library,
+  Camera
 } from 'lucide-react'
 
 const Layout = () => {
@@ -26,6 +27,7 @@ const Layout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Books', href: '/books', icon: BookOpen },
+    { name: 'Shelf Scanner', href: '/scanner', icon: Camera },
   ]
 
   if (user?.role === 'admin') {

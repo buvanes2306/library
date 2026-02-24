@@ -8,6 +8,7 @@ import Books from './pages/Books'
 import BookDetail from './pages/BookDetail'
 import AdminPanel from './pages/AdminPanel'
 import Users from './pages/Users'
+import ShelfScanner from './components/ShelfScanner'
 import Layout from './components/Layout'
 import LoadingSpinner from './components/LoadingSpinner'
 
@@ -33,6 +34,7 @@ function App() {
         <Route path="dash" element={<Navigate to="/dashboard" />} />
         <Route path="books" element={<Books />} />
         <Route path="books/:id" element={<BookDetail />} />
+        <Route path="scanner" element={<ShelfScanner />} />
         
         {user?.role === 'admin' && (
           <>
