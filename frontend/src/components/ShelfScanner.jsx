@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
+import { BarcodeFormat, DecodeHintType } from '@zxing/library'
 import toast from 'react-hot-toast'
 import api from '../api/axios'
 
@@ -22,7 +23,19 @@ const ShelfScanner = () => {
   // Initialize ZXing reader
   useEffect(() => {
     try {
-      codeReaderRef.current = new BrowserMultiFormatReader()
+      const hints = new Map()
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.ITF,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+      ])
+
+      codeReaderRef.current = new BrowserMultiFormatReader(hints)
 
       // Get available cameras
       navigator.mediaDevices.enumerateDevices()
@@ -190,12 +203,8 @@ const ShelfScanner = () => {
         video: {
           deviceId: targetDevice.deviceId ? { exact: targetDevice.deviceId } : undefined,
           facingMode: 'environment',
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          frameRate: { ideal: 30, min: 15 },
-          focusMode: 'continuous',
-          exposureMode: 'continuous',
-          whiteBalanceMode: 'continuous',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
         },
       })
 
@@ -207,9 +216,10 @@ const ShelfScanner = () => {
         codeReaderRef.current.decodeFromVideoDevice(
           targetDevice.deviceId,
           videoRef.current,
-          (result, error) => {
+          (result, err) => {
             if (result) {
               const code = result.getText()
+              console.log("🔥 DETECTED:", code)
               
               // Prevent duplicate rapid scans with time-based cooldown
               const now = Date.now()
@@ -219,7 +229,6 @@ const ShelfScanner = () => {
               }
               
               scannedRef.current.set(code, now) // Store timestamp instead of just boolean
-              console.log('🔍 Detected:', code)
 
               // Update state immediately
               setCodes(prev => {
@@ -233,9 +242,6 @@ const ShelfScanner = () => {
 
               lookupBook(code)
               toast.success(`Scanned: ${code}`)
-            } else if (error && error.name !== 'NotFoundException') {
-              // Only log real errors, not "not found" which is normal
-              console.log("Scan error:", error.message)
             }
           }
         )
@@ -368,7 +374,22 @@ const ShelfScanner = () => {
               )}
               
               <div className="space-y-4">
-                <video ref={videoRef} width="400" height="300" className="rounded-lg shadow-md bg-gray-900" />
+                <div className="mb-6">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{
+                      width: "100%",
+                      maxWidth: "600px",
+                      height: "auto",
+                      objectFit: "cover",
+                      borderRadius: "8px",
+                      border: "2px solid #e5e7eb"
+                    }}
+                  />
+                </div>
                 <div className="flex space-x-4">
                   {!scanning ? (
                     <button
