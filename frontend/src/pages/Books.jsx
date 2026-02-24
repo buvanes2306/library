@@ -348,8 +348,8 @@ const Books = () => {
                     </td>
                     <td className="table-cell">
                       <div className="text-sm">
-                        <div>Rack: {book.locationRack}</div>
-                        <div>Shelf: {book.shelf}</div>
+                        <div>Rack: {book.location?.rack || 'N/A'}</div>
+                        <div>Shelf: {book.location?.shelf || 'N/A'}</div>
                       </div>
                     </td>
                     {user?.role === 'admin' && (

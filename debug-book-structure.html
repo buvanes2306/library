@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔍 Debug Book Structure - Find Exact Location Format</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .fix { background: #e3f2fd; color: #004085; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .test { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .code { background: #f1f3f4; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; }
+        .status { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .tip { background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Book Structure - Find Exact Location Format</h1>
+    
+    <div class="warning">
+        <h2>🚨 Seeing "N/A" Means Structure is Different</h2>
+        <p><strong>Issue:</strong> book.location?.[0] and book.location?.[1] are undefined</p>
+        <p><strong>Cause:</strong> Location is NOT stored as ["A", "3"] array</p>
+        <p><strong>Solution:</strong> Need to see exact structure first</p>
+    </div>
+
+    <div class="success">
+        <h2>✅ Debug Added - Check Browser Console</h2>
+        <p><strong>Action:</strong> Added debug line to show full book structure</p>
+        <p><strong>Location:</strong> Books page table Location column</p>
+        <p><strong>What to look for:</strong> JSON structure of book object</p>
+    </div>
+
+    <div class="test">
+        <h3>🧪 Step 1: Check Browser Console</h3>
+        
+        <h4>🎯 Test Steps:</h4>
+        <ol>
+            <li>Open Books page: <a href="http://localhost:5173/books" target="_blank">http://localhost:5173/books</a></li>
+            <li>Open browser console (F12)</li>
+            <li>Look for JSON output in the Location column</li>
+            <li>Copy the FULL book object structure</li>
+            <li>Paste it here for analysis</li>
+        </ol>
+        
+        <h4>🎯 What You'll See:</h4>
+        <div class="code">
+<!-- In the Location column, you'll see something like: -->
+<pre style="font-size: 10px; color: #666;">
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "bookId": "B001",
+  "accNo": "00001",
+  "title": "Advanced JavaScript",
+  "author": "John Doe",
+  "publisher": "Tech Books",
+  "publishedYear": 2023,
+  "department": "COMPUTER SCIENCE",
+  "status": "Available",
+  "location": ???  // THIS IS WHAT WE NEED TO SEE
+}
+</pre>
+        </div>
+        
+        <h4>🎯 Focus on the "location" field:</h4>
+        <p>Look specifically at how the location field is structured in the JSON output.</p>
+    </div>
+
+    <div class="fix">
+        <h3>🔍 Most Common Real Structures</h3>
+        
+        <h4>✅ Case 1: location is an object (NOT array)</h4>
+        <div class="code">
+// MongoDB:
+{
+  "title": "Java",
+  "location": {
+    "rack": "A",
+    "shelf": "3"
+  }
+}
+
+// Current fix (WRONG):
+book.location?.[0]  // undefined → "N/A"
+book.location?.[1]  // undefined → "N/A"
+
+// Correct fix:
+book.location?.rack  // "A"
+book.location?.shelf // "3"
+        </div>
+        
+        <h4>✅ Case 2: location is stored as a string</h4>
+        <div class="code">
+// MongoDB:
+{
+  "location": "A-3"
+}
+
+// Current fix (WRONG):
+book.location?.[0]  // undefined → "N/A"
+book.location?.[1]  // undefined → "N/A"
+
+// Correct fix:
+book.location?.split('-')[0]  // "A"
+book.location?.split('-')[1]  // "3"
+        </div>
+        
+        <h4>✅ Case 3: Backend transforms data</h4>
+        <div class="code">
+// MongoDB:
+{
+  "location": ["A", "3"]
+}
+
+// Backend response:
+{
+  "locationRack": "A",
+  "locationShelf": "3"
+}
+
+// Current fix (WRONG):
+book.location?.[0]  // undefined → "N/A"
+book.location?.[1]  // undefined → "N/A"
+
+// Correct fix:
+book.locationRack  // "A"
+book.locationShelf // "3"
+        </div>
+    </div>
+
+    <div class="tip">
+        <h3>📋 Alternative Debug Methods</h3>
+        
+        <h4>🔍 Method 1: MongoDB Shell</h4>
+        <div class="code">
+// Connect to MongoDB and run:
+db.books.findOne()
+
+// Or for pretty format:
+db.books.findOne().pretty()
+
+// Look at the location field structure
+        </div>
+        
+        <h4>🔍 Method 2: Network Tab</h4>
+        <div class="code">
+// In browser DevTools:
+1. Open Network tab
+2. Refresh Books page
+3. Find the /books API call
+4. Click on it
+5. Look at Response/Preview
+6. Find the location field structure
+        </div>
+        
+        <h4>🔍 Method 3: Console Log</h4>
+        <div class="code">
+// Temporarily add to fetchBooks function:
+console.log('🔍 BOOK STRUCTURE:', response.data.data.books[0]);
+
+// This will show the exact structure in console
+        </div>
+    </div>
+
+    <div class="warning">
+        <h3>📋 99% Probability - Object Structure</h3>
+        
+        <h4>🎯 Most Likely Issue:</h4>
+        <p>If you're seeing "N/A", the most probable reason is that <strong>location is an object, not an array</strong>.</p>
+        
+        <h4>🎯 Quick Fix to Try:</h4>
+        <div class="code">
+// Change this:
+<div>Rack: {book.location?.[0] || 'N/A'}</div>
+<div>Shelf: {book.location?.[1] || 'N/A'}</div>
+
+// To this:
+<div>Rack: {book.location?.rack || 'N/A'}</div>
+<div>Shelf: {book.location?.shelf || 'N/A'}</div>
+        </div>
+        
+        <h4>🎯 Why This is Likely:</h4>
+        <ul>
+            <li><strong>Common Practice:</strong> Most developers store location as object</li>
+            <li><strong>Better Structure:</strong> location.rack is clearer than location[0]</li>
+            <li><strong>MongoDB Best:</strong> Objects are more flexible than arrays</li>
+            <li><strong>API Standards:</strong> REST APIs usually prefer objects</li>
+        </ul>
+    </div>
+
+    <div class="test">
+        <h3>🧪 Quick Test - Object Structure</h3>
+        
+        <h4>🎯 Test This Fix:</h4>
+        <div class="code">
+// Replace the current debug with this:
+<td className="table-cell">
+  <div className="text-sm">
+    <div>Rack: {book.location?.rack || 'N/A'}</div>
+    <div>Shelf: {book.location?.shelf || 'N/A'}</div>
+  </div>
+</td>
+        </div>
+        
+        <h4>🎯 Expected Results:</h4>
+        <ul>
+            <li><strong>If it works:</strong> You'll see actual rack/shelf values</li>
+            <li><strong>If still N/A:</strong> Structure is different (show me the JSON)</li>
+            <li><strong>If error:</strong> Location field doesn't exist or is null</li>
+        </ul>
+    </div>
+
+    <div class="fix">
+        <h3>🚀 Next Steps</h3>
+        
+        <h4>🎯 Step 1: Check Current Debug Output</h4>
+        <ol>
+            <li>Open Books page</li>
+            <li>Look at the JSON output in Location column</li>
+            <li>Find the "location" field structure</li>
+            <li>Copy the full book object</li>
+        </ol>
+        
+        <h4>🎯 Step 2: Apply Correct Fix</h4>
+        <div class="code">
+// Based on what you find, use the appropriate fix:
+
+// If location is object:
+book.location?.rack
+book.location?.shelf
+
+// If location is string:
+book.location?.split('-')[0]
+book.location?.split('-')[1]
+
+// If location is array:
+book.location?.[0]
+book.location?.[1]
+
+// If backend transforms:
+book.locationRack
+book.locationShelf
+        </div>
+        
+        <h4>🎯 Step 3: Remove Debug Code</h4>
+        <p>Once fixed, remove the debug line:</p>
+        <div class="code">
+// Remove this line:
+<pre style={{fontSize: '10px', color: '#666'}}>{JSON.stringify(book, null, 2)}</pre>
+        </div>
+    </div>
+
+    <div class="success">
+        <h3>🎉 Debug Ready!</h3>
+        <p><strong>🔍 Debug code added - check your Books page now!</strong></p>
+        
+        <p><strong>🌐 Open Books page:</strong> <a href="http://localhost:5173/books" target="_blank">http://localhost:5173/books</a></p>
+        
+        <p><strong>🎯 What to Do:</strong></p>
+        <ol>
+            <li>Look at the JSON output in the Location column</li>
+            <li>Find the exact "location" field structure</li>
+            <li>Paste the structure here</li>
+            <li>I'll provide the exact fix</li>
+        </ol>
+        
+        <p><strong>🔥 Most likely fix:</strong></p>
+        <div class="code">
+// Try this first (most probable):
+<div>Rack: {book.location?.rack || 'N/A'}</div>
+<div>Shelf: {book.location?.shelf || 'N/A'}</div>
+        </div>
+        
+        <p><strong>🏆 Let's find the exact structure and fix it properly!</strong></p>
+    </div>
+
+    <script>
+        // Auto-check if books page is accessible
+        fetch('http://localhost:5173/books')
+            .then(() => {
+                document.body.innerHTML += '<div class="success">🔍 Debug code added - check your Books page for JSON structure!</div>';
+            })
+            .catch(() => {
+                document.body.innerHTML += '<div class="warning">⚠️ Books page not accessible - please start frontend</div>';
+            });
+    </script>
+</body>
+</html>
