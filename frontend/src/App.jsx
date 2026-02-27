@@ -9,6 +9,8 @@ import BookDetail from './pages/BookDetail'
 import AdminPanel from './pages/AdminPanel'
 import Users from './pages/Users'
 import ShelfScanner from './components/ShelfScanner'
+import AuditPage from './pages/AuditPage'
+import AuditReportPage from './pages/AuditReportPage'
 import Layout from './components/Layout'
 import LoadingSpinner from './components/LoadingSpinner'
 
@@ -35,6 +37,8 @@ function App() {
         <Route path="books" element={<Books />} />
         <Route path="books/:id" element={<BookDetail />} />
         <Route path="scanner" element={<ShelfScanner />} />
+        <Route path="audit" element={<AuditPage />} />
+        <Route path="audit-report/:auditSessionId" element={<AuditReportPage />} />
         
         {user?.role === 'admin' && (
           <>

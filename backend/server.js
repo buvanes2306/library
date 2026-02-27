@@ -11,6 +11,9 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import bookRoutes from './routes/books.js';
 import userRoutes from './routes/users.js';
+import auditRoutes from './routes/audit.js';
+import locationRoutes from './routes/location.js';
+import locationWithCountsRoutes from './routes/location-with-counts.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,6 +49,9 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/locations-with-counts', locationWithCountsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

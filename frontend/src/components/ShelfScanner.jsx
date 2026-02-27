@@ -4,7 +4,7 @@ import { BarcodeFormat, DecodeHintType } from '@zxing/library'
 import toast from 'react-hot-toast'
 import api from '../api/axios'
 
-const ShelfScanner = () => {
+const ShelfScanner = ({ onCodesChange }) => {
   const [codes, setCodes] = useState(new Set())
   const [scanning, setScanning] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -19,6 +19,13 @@ const ShelfScanner = () => {
   const codeReaderRef = useRef(null)
   const cancelScanRef = useRef(null)
   const scannedRef = useRef(new Map())
+
+  // Notify parent when codes change (for audit integration)
+  useEffect(() => {
+    if (onCodesChange) {
+      onCodesChange([...codes])
+    }
+  }, [codes, onCodesChange])
 
   // Initialize ZXing reader
   useEffect(() => {
@@ -101,18 +108,41 @@ const ShelfScanner = () => {
     const img = new Image()
     img.onload = async () => {
       try {
-        const result = await codeReaderRef.current.decodeFromImageElement(img)
-        if (result) {
-          const detectedCode = result.getText()
-          setCodes(new Set([detectedCode]))
-          await lookupBook(detectedCode)
-          toast.success(`Barcode detected: ${detectedCode}`)
-        } else {
+        // Multi-barcode detection for shelf images
+        const results = await codeReaderRef.current.decodeMultipleFromImageElement(img)
+
+        if (!results || results.length === 0) {
           toast.error('No barcode detected in image')
+          return
         }
+
+        // Collect unique, non-empty codes
+        const detectedSet = new Set(
+          results
+            .map(r => r.getText())
+            .filter(code => code && code.trim() !== '')
+        )
+
+        if (detectedSet.size === 0) {
+          toast.error('No valid barcodes found')
+          return
+        }
+
+        // Update UI with all detected codes
+        setCodes(detectedSet)
+
+        // Use batch lookup instead of per-code lookup for shelf mode
+        await processBatchCodes([...detectedSet])
+
+        toast.success(`${detectedSet.size} barcodes detected from shelf image`)
       } catch (error) {
-        console.error('Barcode detection error:', error)
-        toast.error('No barcode detected in image')
+        console.error('Multi-barcode detection error:', error)
+
+        if (error?.message?.includes('decodeMultipleFromImageElement')) {
+          toast.error('Your ZXing version does not support multi-detection. Please upgrade @zxing/browser.')
+        } else {
+          toast.error('Failed to detect barcodes from image')
+        }
       } finally {
         setProcessing(false)
       }

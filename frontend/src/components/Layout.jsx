@@ -10,7 +10,8 @@ import {
   X,
   Home,
   Library,
-  Camera
+  Camera,
+  ClipboardList
 } from 'lucide-react'
 
 const Layout = () => {
@@ -28,6 +29,7 @@ const Layout = () => {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Books', href: '/books', icon: BookOpen },
     { name: 'Shelf Scanner', href: '/scanner', icon: Camera },
+    { name: 'Shelf Audit', href: '/audit', icon: ClipboardList },
   ]
 
   if (user?.role === 'admin') {
